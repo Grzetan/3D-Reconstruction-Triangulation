@@ -41,7 +41,12 @@ struct Quaternion{
     double real, i, j, k;
 
     Quaternion operator*(Quaternion& q){
-        return {0,0,0,0};
+        return {
+            real*q.real - i*q.i - j*q.j - k*q.k,
+            i*q.real + real*q.i + j*q.k - k*q.j,
+            real*q.j - i*q.k + j*q.real + k*q.i,
+            real*q.k + i*q.j - j*q.i + k*q.real
+        };
     }
 };
 
