@@ -1,5 +1,12 @@
 #include <iostream>
 #include <math.h>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <array>
+
+// Frame -> Drone -> X, Y, Z
+typedef std::vector<std::vector<std::array<double, 3>>> MarkerData;
 
 struct Vec3{
     double x, y, z;
@@ -64,7 +71,50 @@ Quaternion computeRotationQuaternion(Vec3 planeNormal1, Vec3 planeNormal2){
     return {std::cos(theta / 2.0), rotationAxis.x, rotationAxis.y, rotationAxis.z};
 }
 
+void parseData(std::string path, MarkerData& data){
+    std::ifstream file(path);
+    std::string line;
+
+    // Remove header and second line
+    std::getline(file, line);
+    std::getline(file, line);
+
+    int count = 0;
+
+    while(std::getline(file, line)){
+        std::stringstream ss(line);
+        std::string token;
+        std::vector<std::array<double, 3>> frame;
+        std::array<double, 3> drone;
+
+
+        while(std::getline(ss, token, ',')) {
+            double val = std::stod(token);
+            if(count == 3){
+                frame.push_back(drone);
+                count = 0;
+            }
+            drone[count] = val;
+            count++;
+        }
+        frame.push_back(drone); // Add last drone
+        std::cout << frame.size() << std::endl;
+
+        data.push_back(frame);
+    }
+}
+
 int main(){
+
+    MarkerData data;
+    parseData("./Dron T02.csv", data);
+
+    std::cout << data[0].size() << std::endl;
+    // for(auto& x : data){
+    //     for(auto& y : x){
+    //         std::cout << y[0] << ", " << y[1] << ", " << y[2] << std::endl;
+    //     }
+    // }
 
     // Czy można założyc że te 4 punkty sa wspolnopłaszczyznowe?? Jeśli nie to które punkty wyznaczaja plaszczyzne?
     Vec3 p1 = {0, 0, 0};
