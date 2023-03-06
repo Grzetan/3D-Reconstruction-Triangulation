@@ -84,12 +84,12 @@ void parseData(std::string path, MarkerData& data){
     while(std::getline(file, line)){
         std::stringstream ss(line);
         std::string token;
-        std::vector<std::array<double, 3>> frame;
+        std::vector<std::array<double, 3>> frame = {};
         std::array<double, 3> drone;
-
 
         while(std::getline(ss, token, ',')) {
             double val = std::stod(token);
+
             if(count == 3){
                 frame.push_back(drone);
                 count = 0;
@@ -98,7 +98,6 @@ void parseData(std::string path, MarkerData& data){
             count++;
         }
         frame.push_back(drone); // Add last drone
-        std::cout << frame.size() << std::endl;
 
         data.push_back(frame);
     }
@@ -109,12 +108,11 @@ int main(){
     MarkerData data;
     parseData("./Dron T02.csv", data);
 
-    std::cout << data[0].size() << std::endl;
-    // for(auto& x : data){
-    //     for(auto& y : x){
-    //         std::cout << y[0] << ", " << y[1] << ", " << y[2] << std::endl;
-    //     }
-    // }
+    for(int i=0; i<5; i++){
+        for(int j=0; j<4; j++){
+            std::cout << data[i][j][0] << ", " << data[i][j][1] << ", " << data[i][j][2] << std::endl;
+        }
+    }
 
     // Czy można założyc że te 4 punkty sa wspolnopłaszczyznowe?? Jeśli nie to które punkty wyznaczaja plaszczyzne?
     Vec3 p1 = {0, 0, 0};
