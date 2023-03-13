@@ -82,6 +82,7 @@ struct Quaternion{
 
 // Frame -> Drone -> X, Y, Z
 typedef std::vector<std::vector<Vec3>> MarkerData;
+typedef std::array<std::array<double, 3>, 3> RotationMatrix;
 
 Vec3 computePlaneNormal(std::array<Vec3, 4> points){
     // Find longest arm
@@ -104,7 +105,7 @@ Vec3 computePlaneNormal(std::array<Vec3, 4> points){
         }
     }
 
-    
+    // TODO
 
 
 }
@@ -148,27 +149,47 @@ void parseData(std::string path, MarkerData& data){
     }
 }
 
+RotationMatrix quaternionToMatrix(Quaternion q){
+    RotationMatrix r;
+    r[0][0] = 2 * (q.real * q.real + q.i * q.i) - 1;
+    r[0][1] = 2 * (q.i * q.j - q.real * q.k);
+    r[0][2] = 2 * (q.i * q.k + q.real * q.j);
+    r[1][0] = 2 * (q.i * q.j + q.real * q.k);
+    r[1][1] = 2 * (q.real * q.real + q.j * q.j) - 1;
+    r[1][2] = 2 * (q.j * q.k - q.real * q.i);
+    r[2][0] = 2 * (q.i * q.k - q.real * q.j);
+    r[2][1] = 2 * (q.j * q.k + q.real * q.i);
+    r[2][2] = 2 * (q.real * q.real + q.k * q.k) - 1;
+
+    return r;
+}
+
 int main(){
     // I think desired plane is passed as quarternion so we know it's normal vector
-    Vec3 groundPlane = {1,0.56,89};
+    // Vec3 groundPlane = {1,0.56,89};
 
-    MarkerData data;
-    parseData("./Dron T02.csv", data);
+    // MarkerData data;
+    // parseData("./Dron T02.csv", data);
 
-    const int N_MARKERS = data[0].size();
+    // const int N_MARKERS = data[0].size();
 
-    for(int i=0; i<5; i++){
-        // std::cout << data[i][j][0] << ", " << data[i][j][1] << ", " << data[i][j][2] << std::endl;
+    // for(int i=0; i<5; i++){
+    //     // std::cout << data[i][j][0] << ", " << data[i][j][1] << ", " << data[i][j][2] << std::endl;
 
-        Vec3 planeNormal = computePlaneNormal({data[i][0], data[i][1], data[i][2], data[i][3]});
+    //     Vec3 planeNormal = computePlaneNormal({data[i][0], data[i][1], data[i][2], data[i][3]});
 
-        // Calculate rotation quarternion between two planes
-        Quaternion rotationQuaternion = computeRotationQuaternion(planeNormal, groundPlane);
+    //     // Calculate rotation quarternion between two planes
+    //     Quaternion rotationQuaternion = computeRotationQuaternion(planeNormal, groundPlane);
 
-        std::cout << "Rotation quaternion: r = " 
-                << rotationQuaternion.real << ", i = " 
-                << rotationQuaternion.i << ", j = " 
-                << rotationQuaternion.j << ", k = " 
-                << rotationQuaternion.k << std::endl;
-    }
+    //     std::cout << "Rotation quaternion: r = " 
+    //             << rotationQuaternion.real << ", i = " 
+    //             << rotationQuaternion.i << ", j = " 
+    //             << rotationQuaternion.j << ", k = " 
+    //             << rotationQuaternion.k << std::endl;
+    // }
+
+    Quaternion cameraOrientation = {-0.841005897435859, -0.00169580424958536, 0.00283556085745294, 0.541015863280067};
+    Vec3 cameraPosition = {51.0230068140593, 6451.595035567, 3194.00257197};
+
+
 }
