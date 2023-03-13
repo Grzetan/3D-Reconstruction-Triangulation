@@ -5,6 +5,8 @@
 #include <sstream>
 #include <array>
 
+typedef std::array<std::array<double, 3>, 3> RotationMatrix;
+
 struct Vec3{
     double x, y, z;
 
@@ -62,6 +64,14 @@ struct Vec3{
         return std::sqrt(std::pow(x - v.x, 2) + std::pow(y - v.y, 2) + std::pow(z - v.z, 2));
     }
 
+    Vec3 operator*(RotationMatrix& r){
+        Vec3 p;
+        p.x = x*r[0][0] + y*r[0][1] + z*r[0][2];
+        p.y = x*r[1][0] + y*r[1][1] + z*r[1][2];
+        p.z = x*r[2][0] + y*r[2][1] + z*r[2][2];
+        return p;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const Vec3& dt){
         return os << dt.x << ", " << dt.y << ", " << dt.z << std::endl;
     }
@@ -82,7 +92,6 @@ struct Quaternion{
 
 // Frame -> Drone -> X, Y, Z
 typedef std::vector<std::vector<Vec3>> MarkerData;
-typedef std::array<std::array<double, 3>, 3> RotationMatrix;
 
 Vec3 computePlaneNormal(std::array<Vec3, 4> points){
     // Find longest arm
@@ -164,6 +173,12 @@ RotationMatrix quaternionToMatrix(Quaternion q){
     return r;
 }
 
+Vec3 pointToCameraCoordinates(Vec3& p, Quaternion& cameraOrientation, Vec3& cameraPosition){
+    RotationMatrix R = quaternionToMatrix(cameraOrientation);
+    Vec3 translated_p = p - cameraPosition;
+    return translated_p * R;
+}
+
 int main(){
     // I think desired plane is passed as quarternion so we know it's normal vector
     // Vec3 groundPlane = {1,0.56,89};
@@ -190,6 +205,7 @@ int main(){
 
     Quaternion cameraOrientation = {-0.841005897435859, -0.00169580424958536, 0.00283556085745294, 0.541015863280067};
     Vec3 cameraPosition = {51.0230068140593, 6451.595035567, 3194.00257197};
+    Vec3 p = {1,2,3};
 
-
+    std::cout << pointToCameraCoordinates(p, cameraOrientation, cameraPosition);
 }
