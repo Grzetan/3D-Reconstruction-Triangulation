@@ -88,6 +88,14 @@ struct Quaternion{
             real*q.k + i*q.j - j*q.i + k*q.real
         };
     }
+
+    void normalize(){
+        double d = std::sqrt(real*real + i*i + j*j + k*k);
+        real /= d;
+        i /= d;
+        j /= d;
+        k /= d;
+    }
 };
 
 // Frame -> Drone -> X, Y, Z
@@ -173,7 +181,8 @@ RotationMatrix quaternionToMatrix(Quaternion q){
     return r;
 }
 
-Vec3 pointToCameraCoordinates(Vec3& p, Quaternion& cameraOrientation, Vec3& cameraPosition){
+Vec3 pointToCameraCoordinates(Vec3 p, Quaternion cameraOrientation, Vec3 cameraPosition){
+    cameraOrientation.normalize();
     RotationMatrix R = quaternionToMatrix(cameraOrientation);
     Vec3 translated_p = p - cameraPosition;
     return translated_p * R;
@@ -203,9 +212,18 @@ int main(){
     //             << rotationQuaternion.k << std::endl;
     // }
 
-    Quaternion cameraOrientation = {-0.841005897435859, -0.00169580424958536, 0.00283556085745294, 0.541015863280067};
-    Vec3 cameraPosition = {51.0230068140593, 6451.595035567, 3194.00257197};
-    Vec3 p = {1,2,3};
+    double focal_len = 500;
+    std::array<double, 2> principal_point = {320, 240};
+    Quaternion cameraOrientation = {1, 0, 0, 0}; // 180 degree rotation around y axis (camera pointing in -X axis)
+    Vec3 cameraPosition = {0, 0, 0};
+    Vec3 p = {4,0,0};
 
-    std::cout << pointToCameraCoordinates(p, cameraOrientation, cameraPosition);
+    Vec3 camCoords_p = pointToCameraCoordinates(p, cameraOrientation, cameraPosition);
+
+    std::cout << camCoords_p << std::endl;
+
+    double x = camCoords_p.x / (camCoords_p.z + 1e-6) * focal_len + principal_point[0];
+    double y = camCoords_p.y / (camCoords_p.z + 1e-6) * focal_len + principal_point[1];
+
+    std::cout << x << ", " << y << std::endl;
 }
