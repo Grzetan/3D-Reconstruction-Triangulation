@@ -7,7 +7,20 @@ __pycache__/
 *.so
 *.out
 
-.vscode/
+#.vscode/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+main
 
 # Distribution / packaging
 .Python

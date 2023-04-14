@@ -67,7 +67,7 @@ namespace tdr
 		 */
 		void compCxCy()
 		{
-			if (width == 0 || height == 0) throw std::exception("Set width and height first.");
+			if (width == 0 || height == 0) throw std::runtime_error("Set width and height first.");
 			cx = (int)round(width / 2.0);
 			cy = (int)round(height / 2.0);
 		}
@@ -78,7 +78,7 @@ namespace tdr
 		 */
 		void compFovy()
 		{
-			if (fovx == 0) throw std::exception("Set fovx first.");
+			if (fovx == 0) throw std::runtime_error("Set fovx first.");
 			fovy = 2.0 * atan(tan(fovx * 0.5 * DEG_TO_RAD) / (double(width) / double(height))) * RAD_TO_DEG;
 		}
 
@@ -88,7 +88,7 @@ namespace tdr
 		 */
 		void compFxFy()
 		{
-			if (width == 0 || height == 0 || fovx == 0 || fovy ==0 ) throw std::exception("Set width, height, fovx, and fovy first.");
+			if (width == 0 || height == 0 || fovx == 0 || fovy ==0 ) throw std::runtime_error("Set width, height, fovx, and fovy first.");
 			fx = (width / 2.0) / (tan((fovx / 2.0) * DEG_TO_RAD));
 			fy = (height / 2.0) / (tan((fovy / 2.0) * DEG_TO_RAD));
 
@@ -100,7 +100,7 @@ namespace tdr
 		 */
 		void createCamMat()
 		{
-			if (fx == 0 || fy == 0 || cx == 0 || cy == 0) throw std::exception("Set fx, fy, cx, and cy first.");
+			if (fx == 0 || fy == 0 || cx == 0 || cy == 0) throw std::runtime_error("Set fx, fy, cx, and cy first.");
 			this->cameraMatrix = (cv::Mat_<double>(3, 3) <<
 				fx, 0, cx,
 				0, fy, cy,
@@ -229,7 +229,7 @@ namespace tdr
 			double normVal = norm(quat);
 			if (normVal < 1.e-6)
 			{
-				throw std::exception("Cannot normalize this quaternion: the norm is too small.");
+				throw std::runtime_error("Cannot normalize this quaternion: the norm is too small.");
 			}
 			double x = quat.at<double>(0, 0) / normVal;
 			double y = quat.at<double>(1, 0) / normVal;

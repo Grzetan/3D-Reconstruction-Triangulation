@@ -1,0 +1,1 @@
+opencv must be installed (https://www.geeksforgeeks.org/how-to-install-opencv-in-c-on-linux/)

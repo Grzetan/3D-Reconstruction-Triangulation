@@ -5,7 +5,19 @@
 #include <sstream>
 #include <array>
 
-typedef std::array<std::array<double, 3>, 3> RotationMatrix;
+struct Matrix3x3{
+    std::array<std::array<double, 3>, 3> data;
+
+    std::array<double, 3>& operator[](int idx){
+        return data[idx];
+    } 
+
+    void transpose(){
+        std::swap(data[0][1], data[1][0]);
+        std::swap(data[0][2], data[2][0]);
+        std::swap(data[1][2], data[2][1]);
+    }
+};
 
 struct Vec3{
     double x, y, z;
@@ -64,11 +76,22 @@ struct Vec3{
         return std::sqrt(std::pow(x - v.x, 2) + std::pow(y - v.y, 2) + std::pow(z - v.z, 2));
     }
 
-    Vec3 operator*(RotationMatrix& r){
+    Vec3 operator*(Matrix3x3& r){
         Vec3 p;
+        // For 3x3 rotation matrix
         p.x = x*r[0][0] + y*r[0][1] + z*r[0][2];
         p.y = x*r[1][0] + y*r[1][1] + z*r[1][2];
         p.z = x*r[2][0] + y*r[2][1] + z*r[2][2];
+
+        // For 4x4 rotation matrix
+        // double x_ = (R[0][0] * x) + (R[0][1] * y) + (R[0][2] * z) + R[0][3];
+        // double y_ = (R[1][0] * x) + (R[1][1] * y) + (R[1][2] * z) + R[1][3];
+        // double z_ = (R[2][0] * x) + (R[2][1] * y) + (R[2][2] * z) + R[2][3];
+        // double w_ = (R[3][0] * x) + (R[3][1] * y) + (R[3][2] * z) + R[3][3];
+
+        // p.x = x_ / w_;
+        // p.y = y_ / w_;
+        // p.z = z_ / w_;
         return p;
     }
 
@@ -166,24 +189,46 @@ void parseData(std::string path, MarkerData& data){
     }
 }
 
-RotationMatrix quaternionToMatrix(Quaternion q){
-    RotationMatrix r;
-    r[0][0] = 2 * (q.real * q.real + q.i * q.i) - 1;
-    r[0][1] = 2 * (q.i * q.j - q.real * q.k);
-    r[0][2] = 2 * (q.i * q.k + q.real * q.j);
-    r[1][0] = 2 * (q.i * q.j + q.real * q.k);
-    r[1][1] = 2 * (q.real * q.real + q.j * q.j) - 1;
-    r[1][2] = 2 * (q.j * q.k - q.real * q.i);
-    r[2][0] = 2 * (q.i * q.k - q.real * q.j);
-    r[2][1] = 2 * (q.j * q.k + q.real * q.i);
-    r[2][2] = 2 * (q.real * q.real + q.k * q.k) - 1;
+Matrix3x3 quaternionToMatrix(Quaternion q){
+    Matrix3x3 r;
+    // r[0][0] = 2 * (q.real * q.real + q.i * q.i) - 1;
+    // r[0][1] = 2 * (q.i * q.j - q.real * q.k);
+    // r[0][2] = 2 * (q.i * q.k + q.real * q.j);
+    // r[1][0] = 2 * (q.i * q.j + q.real * q.k);
+    // r[1][1] = 2 * (q.real * q.real + q.j * q.j) - 1;
+    // r[1][2] = 2 * (q.j * q.k - q.real * q.i);
+    // r[2][0] = 2 * (q.i * q.k - q.real * q.j);
+    // r[2][1] = 2 * (q.j * q.k + q.real * q.i);
+    // r[2][2] = 2 * (q.real * q.real + q.k * q.k) - 1;
+    r[0][0] = 1 - 2*q.j*q.j - 2*q.k*q.k;
+    r[0][1] = 2*q.i*q.j - 2*q.real*q.k;
+    r[0][2] = 2*q.i*q.k + 2*q.real*q.j;
+    // r[0][3] = 0;
+    r[1][0] = 2*q.i*q.j + 2*q.real*q.k;
+    r[1][1] = 1 - 2*q.i*q.i - 2*q.k*q.k;
+    r[1][2] = 2*q.j*q.k - 2*q.real*q.i;
+    // r[1][3] = 0;
+    r[2][0] = 2*q.i*q.k - 2*q.real*q.j;
+    r[2][1] = 2*q.j*q.k + 2*q.real*q.i;
+    r[2][2] = 1 - 2*q.i*q.i - 2*q.j*q.j;
+    // r[2][3] = 0;
+    // r[3][0] = 0;
+    // r[3][1] = 0;
+    // r[3][2] = 0;
+    // r[3][3] = 1;
 
     return r;
 }
 
 Vec3 pointToCameraCoordinates(Vec3 p, Quaternion cameraOrientation, Vec3 cameraPosition){
     cameraOrientation.normalize();
-    RotationMatrix R = quaternionToMatrix(cameraOrientation);
+    Matrix3x3 R = quaternionToMatrix(cameraOrientation);
+    for(int i=0; i<3; i++){
+        for(int j=0; j<3; j++){
+            std::cout << R[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
     Vec3 translated_p = p - cameraPosition;
     return translated_p * R;
 }
@@ -214,16 +259,16 @@ int main(){
 
     double focal_len = 500;
     std::array<double, 2> principal_point = {320, 240};
-    Quaternion cameraOrientation = {1, 0, 0, 0}; // 180 degree rotation around y axis (camera pointing in -X axis)
+    Quaternion cameraOrientation = {0.7071, 0, 0.7071, 0};
     Vec3 cameraPosition = {0, 0, 0};
-    Vec3 p = {4,0,0};
+    Vec3 p = {1,1,-40};
 
     Vec3 camCoords_p = pointToCameraCoordinates(p, cameraOrientation, cameraPosition);
 
     std::cout << camCoords_p << std::endl;
 
-    double x = camCoords_p.x / (camCoords_p.z + 1e-6) * focal_len + principal_point[0];
-    double y = camCoords_p.y / (camCoords_p.z + 1e-6) * focal_len + principal_point[1];
+    double x = camCoords_p.x / (-camCoords_p.z + 1e-6) * focal_len + principal_point[0];
+    double y = camCoords_p.y / (-camCoords_p.z + 1e-6) * focal_len + principal_point[1];
 
     std::cout << x << ", " << y << std::endl;
 }
