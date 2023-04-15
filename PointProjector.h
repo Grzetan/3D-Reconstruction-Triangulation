@@ -51,7 +51,7 @@ private:
 };
 
 class PointProjector {
-	std::vector<tdr::Camera> cameras;
+	std::vector<const tdr::Camera*> cameras;
 
     cv::Point3d projectPoint(std::vector<Ray>& rays) {
         cv::Point3d initGuess;
@@ -93,7 +93,7 @@ class PointProjector {
         return rayDir;
     }
 public:
-	PointProjector(std::vector<tdr::Camera> cameras_) : cameras(cameras_) {};
+	PointProjector(std::vector<const tdr::Camera*> cameras_) : cameras(cameras_) {};
 
 	// first dim = n_points
 	// second dim = n_cameras
@@ -104,11 +104,11 @@ public:
             std::vector<Ray> rays;
             for (int i = 0; i < p.size(); i++) {
                 if (p[i].x == -1 || p[i].y == -1) continue;
-                cv::Mat perspectiveMatrix = cameras[i].cameraPerspectiveMatrix;
+                cv::Mat perspectiveMatrix = cameras[i]->cameraPerspectiveMatrix;
                 cv::Point3d origin;
-                origin.x = cameras[i].camPos.at<double>(0);
-                origin.y = cameras[i].camPos.at<double>(0);
-                origin.z = cameras[i].camPos.at<double>(0);
+                origin.x = cameras[i]->camPos.at<double>(0);
+                origin.y = cameras[i]->camPos.at<double>(0);
+                origin.z = cameras[i]->camPos.at<double>(0);
 
                 rays.push_back({ origin, calculateRayDirectionForPoint(perspectiveMatrix, p[i]) });
             }

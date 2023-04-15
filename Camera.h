@@ -114,23 +114,23 @@ namespace tdr
 		void createExtricsicMat() {
 			cv::Mat rotation_matrix = toRotMatrix(rquat);
 
-			cv::Mat extrinsicMatrix(3, 4, CV_64F);
-			extrinsicMatrix.at<double>(0, 0) = rotation_matrix.at<double>(0, 0);
-			extrinsicMatrix.at<double>(0, 1) = rotation_matrix.at<double>(0, 1);
-			extrinsicMatrix.at<double>(0, 2) = rotation_matrix.at<double>(0, 2);
-			extrinsicMatrix.at<double>(0, 3) = camPos.at<double>(0);
+			// cv::Mat extrinsicMatrix(3, 4, CV_64F);
+			// extrinsicMatrix.at<double>(0, 0) = rotation_matrix.at<double>(0, 0);
+			// extrinsicMatrix.at<double>(0, 1) = rotation_matrix.at<double>(0, 1);
+			// extrinsicMatrix.at<double>(0, 2) = rotation_matrix.at<double>(0, 2);
+			// extrinsicMatrix.at<double>(0, 3) = camPos.at<double>(0);
 
-			extrinsicMatrix.at<double>(1, 0) = rotation_matrix.at<double>(1, 0);
-			extrinsicMatrix.at<double>(1, 1) = rotation_matrix.at<double>(1, 1);
-			extrinsicMatrix.at<double>(1, 2) = rotation_matrix.at<double>(1, 2);
-			extrinsicMatrix.at<double>(1, 3) = camPos.at<double>(1);
+			// extrinsicMatrix.at<double>(1, 0) = rotation_matrix.at<double>(1, 0);
+			// extrinsicMatrix.at<double>(1, 1) = rotation_matrix.at<double>(1, 1);
+			// extrinsicMatrix.at<double>(1, 2) = rotation_matrix.at<double>(1, 2);
+			// extrinsicMatrix.at<double>(1, 3) = camPos.at<double>(1);
 
-			extrinsicMatrix.at<double>(2, 0) = rotation_matrix.at<double>(2, 0);
-			extrinsicMatrix.at<double>(2, 1) = rotation_matrix.at<double>(2, 1);
-			extrinsicMatrix.at<double>(2, 2) = rotation_matrix.at<double>(2, 2);
-			extrinsicMatrix.at<double>(2, 3) = camPos.at<double>(2);
+			// extrinsicMatrix.at<double>(2, 0) = rotation_matrix.at<double>(2, 0);
+			// extrinsicMatrix.at<double>(2, 1) = rotation_matrix.at<double>(2, 1);
+			// extrinsicMatrix.at<double>(2, 2) = rotation_matrix.at<double>(2, 2);
+			// extrinsicMatrix.at<double>(2, 3) = camPos.at<double>(2);
 
-			cameraExtrinsicMatrix = extrinsicMatrix;
+			// cameraExtrinsicMatrix = extrinsicMatrix;
 		}
 
 		/*! \brief Compute camera perspective matrix.
@@ -164,7 +164,7 @@ namespace tdr
 			compCamPos();
 			createCamMat();
 			createExtricsicMat();
-			createPerspectiveMat();
+			// createPerspectiveMat();
 			diagonal = (int)sqrt(width * width + height * height);
 		}
 
@@ -229,7 +229,7 @@ namespace tdr
 			double normVal = norm(quat);
 			if (normVal < 1.e-6)
 			{
-				throw std::runtime_error("Cannot normalize this quaternion: the norm is too small.");
+				// throw std::runtime_error("Cannot normalize this quaternion: the norm is too small.");
 			}
 			double x = quat.at<double>(0, 0) / normVal;
 			double y = quat.at<double>(1, 0) / normVal;
@@ -273,6 +273,7 @@ namespace tdr
 				2 * (b * d - a * c)    , 2 * (c * d + a * b)    , 1 - 2 * (b * b + c * c)
 			};
 			return cv::Mat(R);
+			return quat;
 		}
 
 		/*! \brief Compute OpenCV tvec based on rotation vector nad camera position.

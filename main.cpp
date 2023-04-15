@@ -3,24 +3,24 @@
 #include "PointProjector.h"
 #include "Camera.h"
 
+tdr::Camera* createCamera(size_t width, size_t height, double fovx, cv::Mat translation, cv::Mat rotation){
+    tdr::Camera* cam = new tdr::Camera(0);
+    cam->width = 640;
+    cam->height = 480;
+    cam->fovx = 50;
+    cam->tvec = translation;
+    cam->rvec = cam->toRotVec(rotation);
+    cam->rquat = rotation;
+    cam->compCamParams();
+
+    return cam;
+}
+
 int main(){
-    tdr::Camera cam1(0);
-    cam1.width = 640;
-    cam1.height = 480;
-    cam1.fovx = 50;
-    cv::Mat t1(3, 1, CV_64F);
-    t1.at<double>(0, 0) = -10;
-    t1.at<double>(1, 0) = 0;
-    t1.at<double>(2, 0) = 0;
-    cam1.tvec = t1;
-    cv::Mat r1(4, 1, CV_64F);
-    t1.at<double>(0, 0) = 0.7071;
-    t1.at<double>(1, 0) = 0;
-    t1.at<double>(2, 0) = 0.7071;
-    t1.at<double>(3, 0) = 0;
-    cam1.rvec = cam1.toRotVec(r1);
-    cam1.compCamParams();
-    
+    tdr::Camera* cam1 = createCamera(640, 480, 50, (cv::Mat_<double>(3, 1) << -10, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
+    tdr::Camera* cam2 = createCamera(640, 480, 50, (cv::Mat_<double>(3, 1) << -10, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
+
+    PointProjector projector({cam1, cam2});
 
     std::cout << "XD" << std::endl;
     return 0;
