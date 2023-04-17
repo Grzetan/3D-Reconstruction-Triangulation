@@ -5,7 +5,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 set(EXE_NAME main)
 add_executable( ${EXE_NAME} main.cpp )
 target_link_libraries( ${EXE_NAME} ${OpenCV_LIBS} )
-add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+add_custom_command(TARGET ${EXE_NAME}
                    COMMAND ${EXE_NAME}
                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                    COMMENT "Running ${EXE_NAME}")

@@ -3,9 +3,11 @@
 #include <iostream>
 #include "Camera.h"
 
+# define PI 3.14159265358979323846
+
 struct Ray {
-    cv::Point3d dir;
     cv::Point3d origin;
+    cv::Point3d dir;
 };
 
 class RayClosestPoint : public cv::LMSolver::Callback {
@@ -117,20 +119,29 @@ class PointTriangulator {
         return rayDir;
     }
 
+    cv::Vec3d rotateVectorByQuaternion(const cv::Vec3d& v, const cv::Mat& q)
+    {
+        cv::Vec3d u(q.at<double>(0, 0), q.at<double>(1, 0), q.at<double>(2, 0));
+
+        float s = q.at<double>(3, 0);
+
+        return 2.0f * u.dot(v) * u + (s*s - u.dot(u)) * v + 2.0f * s * u.cross(v);
+    }
+
     // https://computergraphics.stackexchange.com/questions/8479/how-to-calculate-ray
     cv::Vec3d calculateRayDirectionForPoint2(const tdr::Camera* cam, cv::Point2d point){
         // Add 0.5 to get center of pixel
         point.x += 0.5;
         point.y += 0.5; 
 
-        double d = 1 / std::tan(cam->fovx / 2);
+        double d = 1 / std::tan(cam->fovx*0.0174533 / 2);
         cv::Vec3d ray;
-        ray[0] = ((double)cam->width / (double)cam->height) * (2 * point.x / (double)cam->width) - 1;
-        ray[1] = (2 * point.y / (double)cam->height) - 1;
-        ray[2] = d;
+        ray[0] = ((double)cam->width / (double)cam->height) * ((2 * point.x / (double)cam->width) - 1);
+        ray[1] = (2 * (cam->height - point.y) / (double)cam->height) - 1;
+        ray[2] = -d;
         ray = ray / cv::norm(ray);
-
         return ray;
+        // return rotateVectorByQuaternion(ray, cam->rquat);
     }
 
 public:
@@ -148,9 +159,9 @@ public:
                 // cv::Mat perspectiveMatrix = cameras[i]->cameraPerspectiveMatrix;
 
                 cv::Point3d origin;
-                origin.x = cameras[i]->camPos.at<double>(0);
-                origin.y = cameras[i]->camPos.at<double>(0);
-                origin.z = cameras[i]->camPos.at<double>(0);
+                origin.x = cameras[i]->tvec.at<double>(0);
+                origin.y = cameras[i]->tvec.at<double>(1);
+                origin.z = cameras[i]->tvec.at<double>(2);
 
                 rays.push_back({ origin, calculateRayDirectionForPoint2(cameras[i], p[i]) });
             }
@@ -159,6 +170,9 @@ public:
                 throw std::runtime_error("Too few rays are found");
             }
 
+            for(const auto& ray : rays){
+                std::cout << ray.origin << " : " << ray.dir << std::endl;
+            }
             // result.push_back(triangulatePoint(rays));
 		}
 
