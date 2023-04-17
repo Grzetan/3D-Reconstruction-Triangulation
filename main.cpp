@@ -17,12 +17,12 @@ tdr::Camera* createCamera(size_t width, size_t height, double fovx, cv::Mat tran
 }
 
 int main(){
-    tdr::Camera* cam1 = createCamera(640, 640, 70, (cv::Mat_<double>(3, 1) << -10, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
+    tdr::Camera* cam1 = createCamera(640, 480, 90, (cv::Mat_<double>(3, 1) << -10, 0, 0), (cv::Mat_<double>(4, 1) << 0, 0, 0, 1));
     tdr::Camera* cam2 = createCamera(640, 480, 50, (cv::Mat_<double>(3, 1) << -20, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
 
     PointTriangulator projector({cam1, cam2});
 
-    std::vector<std::vector<cv::Point2d>> points = { { {0, 0}, {320, 240} } };
+    std::vector<std::vector<cv::Point2d>> points = { { {320, 240}, {320, 240} } };
 
 
     std::vector<cv::Point3d> triangulated = projector.triangulatePoints(points);

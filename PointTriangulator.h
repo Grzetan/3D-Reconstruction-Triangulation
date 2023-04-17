@@ -97,10 +97,6 @@ class PointTriangulator {
         return rayDir;
     }
 
-    // Find orientation of camera by multiplying 1, 0, 0 by its roatation quaternion
-    // Calculate rotation between camera rotation and 0, 0, -1
-    // Rotate pixel ray by this rotation
-
     cv::Vec3d rotatePointByQuaternion(cv::Vec3d point, const cv::Mat quat)
     {
 
@@ -120,41 +116,23 @@ class PointTriangulator {
 
         double d = 1 / std::tan(cam->fovx*0.0174533 / 2);
         cv::Vec3d ray;
-        ray[0] = ((double)cam->width / (double)cam->height) * ((2 * p.x / (double)cam->width) - 1);
-        ray[1] = (2 * (cam->height - p.y) / (double)cam->height) - 1;
-        ray[2] = -d;
+        // We have to adjust coordinate space so it fits identity quaternion
+        double x = ((double)cam->width / (double)cam->height) * ((2 * p.x / (double)cam->width) - 1);
+        double y = (2 * (cam->height - p.y) / (double)cam->height) - 1;
+        ray[0] = d;
+        ray[1] = y;
+        ray[2] = x;
         return cv::normalize(ray);
-    }
-
-    // Find camera orientation by multiplying rotation quaternion with default vector 1, 0, 0
-    cv::Mat findRotationQuaternion(const cv::Mat& cameraQuat){
-        cv::Vec3d defaultVec(1, 0, 0);
-        cv::Vec3d cameraOrientation = rotatePointByQuaternion(defaultVec, cameraQuat);
-
-        cv::Mat rotQuat(4, 1, CV_64F);
-        cv::Vec3d defaultCameraOrientation(0, 0, -1);
-
-        cv::Vec3d n = defaultCameraOrientation.cross(cameraOrientation);
-        double c = defaultCameraOrientation.dot(cameraOrientation);
-
-        rotQuat.at<double>(0, 0) = std::sqrt((1 + c) / 2.0);
-        rotQuat.at<double>(1, 0) = n[0] + std::sqrt((1 - c) / 2.0);
-        rotQuat.at<double>(2, 0) = n[1] + std::sqrt((1 - c) / 2.0);
-        rotQuat.at<double>(3, 0) = n[2] + std::sqrt((1 - c) / 2.0);
-
-        rotQuat = rotQuat / cv::norm(rotQuat);
-        return rotQuat;
     }
 
     Ray createRayForPoint(const tdr::Camera* cam, const cv::Point2d& point){
         cv::Vec3d pixelDir = calculateRayDirectionForPixel(cam, point);
-        cv::Mat rotQuat = findRotationQuaternion(cam->rquat);
 
         cv::Point3d origin;
         origin.x = cam->tvec.at<double>(0);
         origin.y = cam->tvec.at<double>(1);
         origin.z = cam->tvec.at<double>(2);
-        return {origin, rotatePointByQuaternion(pixelDir, rotQuat)};
+        return {origin, rotatePointByQuaternion(pixelDir, cam->rquat)};
     }
 
 
