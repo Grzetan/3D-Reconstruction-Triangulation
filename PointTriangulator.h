@@ -50,10 +50,10 @@ private:
     std::vector<Ray> rays_;
 };
 
-class PointProjector {
+class PointTriangulator {
 	std::vector<const tdr::Camera*> cameras;
 
-    cv::Point3d projectPoint(std::vector<Ray>& rays) {
+    cv::Point3d triangulatePoint(std::vector<Ray>& rays) {
         cv::Point3d initGuess;
 
         for (const auto& ray : rays) {
@@ -71,6 +71,29 @@ class PointProjector {
         return { params[0], params[1], params[2] };
     }
 
+    std::string type2str(int type) {
+        std::string r;
+
+        uchar depth = type & CV_MAT_DEPTH_MASK;
+        uchar chans = 1 + (type >> CV_CN_SHIFT);
+
+        switch ( depth ) {
+            case CV_8U:  r = "8U"; break;
+            case CV_8S:  r = "8S"; break;
+            case CV_16U: r = "16U"; break;
+            case CV_16S: r = "16S"; break;
+            case CV_32S: r = "32S"; break;
+            case CV_32F: r = "32F"; break;
+            case CV_64F: r = "64F"; break;
+            default:     r = "User"; break;
+        }
+
+        r += "C";
+        r += (chans+'0');
+
+        return r;
+    }
+
     cv::Vec3d calculateRayDirectionForPoint(cv::Mat perspectiveMatrix, cv::Point2d point) {
         cv::Mat p(1, 3, CV_64F);
         p.at<double>(0, 0) = point.x;
@@ -79,10 +102,11 @@ class PointProjector {
 
         cv::Mat homoPoint;
 
-        cv::Mat inversedPerspectiveMatrix;
-        cv::invert(perspectiveMatrix, inversedPerspectiveMatrix);
+        std::cout << perspectiveMatrix.rows << ", " << perspectiveMatrix.cols << std::endl;
+        // cv::Mat inversedPerspectiveMatrix = perspectiveMatrix.inv();
+        // cv::invert(perspectiveMatrix, inversedPerspectiveMatrix);
 
-        cv::perspectiveTransform(p, homoPoint, inversedPerspectiveMatrix);
+        // cv::perspectiveTransform(p, homoPoint, inversedPerspectiveMatrix);
 
         cv::Vec3d rayDir = {
             homoPoint.at<double>(0, 0) / homoPoint.at<double>(0, 3),
@@ -92,32 +116,50 @@ class PointProjector {
 
         return rayDir;
     }
+
+    // https://computergraphics.stackexchange.com/questions/8479/how-to-calculate-ray
+    cv::Vec3d calculateRayDirectionForPoint2(const tdr::Camera* cam, cv::Point2d point){
+        // Add 0.5 to get center of pixel
+        point.x += 0.5;
+        point.y += 0.5; 
+
+        double d = 1 / std::tan(cam->fovx / 2);
+        cv::Vec3d ray;
+        ray[0] = ((double)cam->width / (double)cam->height) * (2 * point.x / (double)cam->width) - 1;
+        ray[1] = (2 * point.y / (double)cam->height) - 1;
+        ray[2] = d;
+        ray = ray / cv::norm(ray);
+
+        return ray;
+    }
+
 public:
-	PointProjector(std::vector<const tdr::Camera*> cameras_) : cameras(cameras_) {};
+	PointTriangulator(std::vector<const tdr::Camera*> cameras_) : cameras(cameras_) {};
 
 	// first dim = n_points
 	// second dim = n_cameras
-	std::vector<cv::Point3d> projectPoints(std::vector<std::vector<cv::Point2d>> points) {
+	std::vector<cv::Point3d> triangulatePoints(std::vector<std::vector<cv::Point2d>> points) {
 		std::vector<cv::Point3d> result;
 
 		for (const auto& p : points) {
             std::vector<Ray> rays;
             for (int i = 0; i < p.size(); i++) {
                 if (p[i].x == -1 || p[i].y == -1) continue;
-                cv::Mat perspectiveMatrix = cameras[i]->cameraPerspectiveMatrix;
+                // cv::Mat perspectiveMatrix = cameras[i]->cameraPerspectiveMatrix;
+
                 cv::Point3d origin;
                 origin.x = cameras[i]->camPos.at<double>(0);
                 origin.y = cameras[i]->camPos.at<double>(0);
                 origin.z = cameras[i]->camPos.at<double>(0);
 
-                rays.push_back({ origin, calculateRayDirectionForPoint(perspectiveMatrix, p[i]) });
+                rays.push_back({ origin, calculateRayDirectionForPoint2(cameras[i], p[i]) });
             }
 
             if (rays.size() < 2) {
                 throw std::runtime_error("Too few rays are found");
             }
 
-            result.push_back(projectPoint(rays));
+            // result.push_back(triangulatePoint(rays));
 		}
 
         return result;

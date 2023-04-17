@@ -114,23 +114,23 @@ namespace tdr
 		void createExtricsicMat() {
 			cv::Mat rotation_matrix = toRotMatrix(rquat);
 
-			// cv::Mat extrinsicMatrix(3, 4, CV_64F);
-			// extrinsicMatrix.at<double>(0, 0) = rotation_matrix.at<double>(0, 0);
-			// extrinsicMatrix.at<double>(0, 1) = rotation_matrix.at<double>(0, 1);
-			// extrinsicMatrix.at<double>(0, 2) = rotation_matrix.at<double>(0, 2);
-			// extrinsicMatrix.at<double>(0, 3) = camPos.at<double>(0);
+			cv::Mat extrinsicMatrix(3, 4, CV_64F);
+			extrinsicMatrix.at<double>(0, 0) = rotation_matrix.at<double>(0, 0);
+			extrinsicMatrix.at<double>(0, 1) = rotation_matrix.at<double>(0, 1);
+			extrinsicMatrix.at<double>(0, 2) = rotation_matrix.at<double>(0, 2);
+			extrinsicMatrix.at<double>(0, 3) = camPos.at<double>(0);
 
-			// extrinsicMatrix.at<double>(1, 0) = rotation_matrix.at<double>(1, 0);
-			// extrinsicMatrix.at<double>(1, 1) = rotation_matrix.at<double>(1, 1);
-			// extrinsicMatrix.at<double>(1, 2) = rotation_matrix.at<double>(1, 2);
-			// extrinsicMatrix.at<double>(1, 3) = camPos.at<double>(1);
+			extrinsicMatrix.at<double>(1, 0) = rotation_matrix.at<double>(1, 0);
+			extrinsicMatrix.at<double>(1, 1) = rotation_matrix.at<double>(1, 1);
+			extrinsicMatrix.at<double>(1, 2) = rotation_matrix.at<double>(1, 2);
+			extrinsicMatrix.at<double>(1, 3) = camPos.at<double>(1);
 
-			// extrinsicMatrix.at<double>(2, 0) = rotation_matrix.at<double>(2, 0);
-			// extrinsicMatrix.at<double>(2, 1) = rotation_matrix.at<double>(2, 1);
-			// extrinsicMatrix.at<double>(2, 2) = rotation_matrix.at<double>(2, 2);
-			// extrinsicMatrix.at<double>(2, 3) = camPos.at<double>(2);
+			extrinsicMatrix.at<double>(2, 0) = rotation_matrix.at<double>(2, 0);
+			extrinsicMatrix.at<double>(2, 1) = rotation_matrix.at<double>(2, 1);
+			extrinsicMatrix.at<double>(2, 2) = rotation_matrix.at<double>(2, 2);
+			extrinsicMatrix.at<double>(2, 3) = camPos.at<double>(2);
 
-			// cameraExtrinsicMatrix = extrinsicMatrix;
+			cameraExtrinsicMatrix = extrinsicMatrix;
 		}
 
 		/*! \brief Compute camera perspective matrix.
@@ -164,7 +164,7 @@ namespace tdr
 			compCamPos();
 			createCamMat();
 			createExtricsicMat();
-			// createPerspectiveMat();
+			createPerspectiveMat();
 			diagonal = (int)sqrt(width * width + height * height);
 		}
 
