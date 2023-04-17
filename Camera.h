@@ -262,10 +262,10 @@ namespace tdr
 		static cv::Mat toRotMatrix(cv::Mat quat)
 		{
 			cv::Mat qTemp = normalize(quat);
-			double b = quat.at<double>(0, 0); //a = qTemp.w;
-			double c = quat.at<double>(1, 0); //b = qTemp.x;
-			double d = quat.at<double>(2, 0); //c = qTemp.y;
-			double a = quat.at<double>(3, 0); //d = qTemp.z;
+			double a = quat.at<double>(0, 0); //a = qTemp.w;
+			double b = quat.at<double>(1, 0); //b = qTemp.x;
+			double c = quat.at<double>(2, 0); //c = qTemp.y;
+			double d = quat.at<double>(3, 0); //d = qTemp.z;
 			
 			cv::Matx<double, 3, 3> R{
 				1 - 2 * (c * c + d * d), 2 * (b * c - a * d)    , 2 * (b * d + a * c),
@@ -273,7 +273,6 @@ namespace tdr
 				2 * (b * d - a * c)    , 2 * (c * d + a * b)    , 1 - 2 * (b * b + c * c)
 			};
 			return cv::Mat(R);
-			return quat;
 		}
 
 		/*! \brief Compute OpenCV tvec based on rotation vector nad camera position.

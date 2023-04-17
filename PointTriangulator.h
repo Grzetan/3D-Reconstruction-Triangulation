@@ -73,29 +73,7 @@ class PointTriangulator {
         return { params[0], params[1], params[2] };
     }
 
-    std::string type2str(int type) {
-        std::string r;
-
-        uchar depth = type & CV_MAT_DEPTH_MASK;
-        uchar chans = 1 + (type >> CV_CN_SHIFT);
-
-        switch ( depth ) {
-            case CV_8U:  r = "8U"; break;
-            case CV_8S:  r = "8S"; break;
-            case CV_16U: r = "16U"; break;
-            case CV_16S: r = "16S"; break;
-            case CV_32S: r = "32S"; break;
-            case CV_32F: r = "32F"; break;
-            case CV_64F: r = "64F"; break;
-            default:     r = "User"; break;
-        }
-
-        r += "C";
-        r += (chans+'0');
-
-        return r;
-    }
-
+    // Not sure if it works
     cv::Vec3d calculateRayDirectionForPoint(cv::Mat perspectiveMatrix, cv::Point2d point) {
         cv::Mat p(1, 3, CV_64F);
         p.at<double>(0, 0) = point.x;
@@ -105,10 +83,10 @@ class PointTriangulator {
         cv::Mat homoPoint;
 
         std::cout << perspectiveMatrix.rows << ", " << perspectiveMatrix.cols << std::endl;
-        // cv::Mat inversedPerspectiveMatrix = perspectiveMatrix.inv();
+        cv::Mat inversedPerspectiveMatrix = perspectiveMatrix.inv();
         // cv::invert(perspectiveMatrix, inversedPerspectiveMatrix);
 
-        // cv::perspectiveTransform(p, homoPoint, inversedPerspectiveMatrix);
+        cv::perspectiveTransform(p, homoPoint, inversedPerspectiveMatrix);
 
         cv::Vec3d rayDir = {
             homoPoint.at<double>(0, 0) / homoPoint.at<double>(0, 3),
@@ -119,30 +97,66 @@ class PointTriangulator {
         return rayDir;
     }
 
-    cv::Vec3d rotateVectorByQuaternion(const cv::Vec3d& v, const cv::Mat& q)
+    // Find orientation of camera by multiplying 1, 0, 0 by its roatation quaternion
+    // Calculate rotation between camera rotation and 0, 0, -1
+    // Rotate pixel ray by this rotation
+
+    cv::Vec3d rotatePointByQuaternion(cv::Vec3d point, const cv::Mat quat)
     {
-        cv::Vec3d u(q.at<double>(0, 0), q.at<double>(1, 0), q.at<double>(2, 0));
 
-        float s = q.at<double>(3, 0);
+        cv::Vec4d quaternion(quat.at<double>(0,0), quat.at<double>(1,0), quat.at<double>(2,0), quat.at<double>(3,0));
+        cv::Vec4d point_quaternion(0, point[0], point[1], point[2]);
+        cv::Vec4d rotated_point_quaternion = quaternion * point_quaternion * quaternion.conj();
 
-        return 2.0f * u.dot(v) * u + (s*s - u.dot(u)) * v + 2.0f * s * u.cross(v);
+        return {rotated_point_quaternion[1], rotated_point_quaternion[2], rotated_point_quaternion[3]};
     }
 
     // https://computergraphics.stackexchange.com/questions/8479/how-to-calculate-ray
-    cv::Vec3d calculateRayDirectionForPoint2(const tdr::Camera* cam, cv::Point2d point){
+    cv::Vec3d calculateRayDirectionForPixel(const tdr::Camera* cam, const cv::Point2d& point){
         // Add 0.5 to get center of pixel
-        point.x += 0.5;
-        point.y += 0.5; 
+        cv::Point2d p(point.x, point.y);
+        p.x += 0.5;
+        p.y += 0.5; 
 
         double d = 1 / std::tan(cam->fovx*0.0174533 / 2);
         cv::Vec3d ray;
-        ray[0] = ((double)cam->width / (double)cam->height) * ((2 * point.x / (double)cam->width) - 1);
-        ray[1] = (2 * (cam->height - point.y) / (double)cam->height) - 1;
+        ray[0] = ((double)cam->width / (double)cam->height) * ((2 * p.x / (double)cam->width) - 1);
+        ray[1] = (2 * (cam->height - p.y) / (double)cam->height) - 1;
         ray[2] = -d;
-        ray = ray / cv::norm(ray);
-        return ray;
-        // return rotateVectorByQuaternion(ray, cam->rquat);
+        return cv::normalize(ray);
     }
+
+    // Find camera orientation by multiplying rotation quaternion with default vector 1, 0, 0
+    cv::Mat findRotationQuaternion(const cv::Mat& cameraQuat){
+        cv::Vec3d defaultVec(1, 0, 0);
+        cv::Vec3d cameraOrientation = rotatePointByQuaternion(defaultVec, cameraQuat);
+
+        cv::Mat rotQuat(4, 1, CV_64F);
+        cv::Vec3d defaultCameraOrientation(0, 0, -1);
+
+        cv::Vec3d n = defaultCameraOrientation.cross(cameraOrientation);
+        double c = defaultCameraOrientation.dot(cameraOrientation);
+
+        rotQuat.at<double>(0, 0) = std::sqrt((1 + c) / 2.0);
+        rotQuat.at<double>(1, 0) = n[0] + std::sqrt((1 - c) / 2.0);
+        rotQuat.at<double>(2, 0) = n[1] + std::sqrt((1 - c) / 2.0);
+        rotQuat.at<double>(3, 0) = n[2] + std::sqrt((1 - c) / 2.0);
+
+        rotQuat = rotQuat / cv::norm(rotQuat);
+        return rotQuat;
+    }
+
+    Ray createRayForPoint(const tdr::Camera* cam, const cv::Point2d& point){
+        cv::Vec3d pixelDir = calculateRayDirectionForPixel(cam, point);
+        cv::Mat rotQuat = findRotationQuaternion(cam->rquat);
+
+        cv::Point3d origin;
+        origin.x = cam->tvec.at<double>(0);
+        origin.y = cam->tvec.at<double>(1);
+        origin.z = cam->tvec.at<double>(2);
+        return {origin, rotatePointByQuaternion(pixelDir, rotQuat)};
+    }
+
 
 public:
 	PointTriangulator(std::vector<const tdr::Camera*> cameras_) : cameras(cameras_) {};
@@ -156,14 +170,8 @@ public:
             std::vector<Ray> rays;
             for (int i = 0; i < p.size(); i++) {
                 if (p[i].x == -1 || p[i].y == -1) continue;
-                // cv::Mat perspectiveMatrix = cameras[i]->cameraPerspectiveMatrix;
 
-                cv::Point3d origin;
-                origin.x = cameras[i]->tvec.at<double>(0);
-                origin.y = cameras[i]->tvec.at<double>(1);
-                origin.z = cameras[i]->tvec.at<double>(2);
-
-                rays.push_back({ origin, calculateRayDirectionForPoint2(cameras[i], p[i]) });
+                rays.push_back(createRayForPoint(cameras[i], p[i]));
             }
 
             if (rays.size() < 2) {
@@ -173,6 +181,16 @@ public:
             for(const auto& ray : rays){
                 std::cout << ray.origin << " : " << ray.dir << std::endl;
             }
+
+
+            // cv::Mat mat = tdr::Camera::toRotMatrix(cameras[0]->rquat);
+            // cv::Vec3d pt(1, 0, 0);
+            // std::cout << mat * pt << std::endl;
+
+            // std::cout << rotatePointByQuaternion(pt, cameras[0]->rquat) << std::endl;
+            // std::cout << findRotationQuaternion(cameras[0]->rquat) << std::endl;
+            // std::cout << rotateVectorByQuaternion({1, 0, 0}, cameras[0]->rquat) << std::endl;
+            // std::cout << "HALO: " << rotateVectorByQuaternion(r, cameras[0]->rquat) << std::endl;
             // result.push_back(triangulatePoint(rays));
 		}
 
