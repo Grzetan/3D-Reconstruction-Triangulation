@@ -14,36 +14,41 @@ class RayClosestPoint : public cv::LMSolver::Callback {
 public:
     explicit RayClosestPoint(const std::vector<Ray>& rays) : rays_(rays) {}
 
-    bool compute(cv::InputArray _x, cv::OutputArray _f, cv::OutputArray _jacobian = cv::noArray()) const override {
-        cv::Vec3d x = _x.getMat().ptr<cv::Vec3d>()[0];
-        cv::Mat1d f(rays_.size(), 1);
+    bool compute(cv::InputArray params, cv::OutputArray err, cv::OutputArray J) const override {
+        cv::Mat paramMat = params.getMat().reshape(1, 1);
+        const double x = paramMat.at<double>(0, 0);
+        const double y = paramMat.at<double>(0, 1);
+        const double z = paramMat.at<double>(0, 2);
+        const cv::Vec3d currentPoint(x, y, z);
 
-        //cv::Mat1d jacobian(rays_.size(), 3);
+        err.create(static_cast<int>(rays_.size()), 1, CV_64FC1);
+        cv::Mat errMat = err.getMat();
+        errMat.forEach<double>([&](double& e, const int* position) {
+            const Ray& r = rays_[position[0]];
+            cv::Point3d p = r.dir.cross(currentPoint - cv::Vec3d(r.origin));
+            e = std::pow(cv::norm(p), 2);
+        });
 
-        //for (size_t i = 0; i < rays_.size(); i++) {
-        //    cv::Vec3d origin = rays_[i].origin;
-        //    cv::Vec3d direction = rays_[i].dir;
-        //    cv::Vec3d ray_direction = direction / cv::norm(direction);
+        if (J.needed())
+        {
+            J.create(errMat.rows, paramMat.cols, CV_64FC1);
+            cv::Mat Jmat = J.getMat();
+            for(int row = 0 ; row<Jmat.rows ; ++row){
+                double* pJ = Jmat.ptr<double>(row);
+                // const double x = this->samplesXY[row].first;
 
-        //    cv::Vec3d origin_to_point = x - origin;
-        //    double distance = origin_to_point.dot(ray_direction);
-        //    cv::Vec3d closest_point = origin + distance * ray_direction;
+                // //using analytic derivatives
+                // *pJ++ = GaussianModel::ComputeDeriveMu(x, mu, sigma);
+                // *pJ++ = GaussianModel::ComputeDeriveSigma(x, mu, sigma);
 
-        //    f(i, 0) = cv::norm(closest_point - x);
-
-        //    jacobian.row(i) = (closest_point - x).t();
-        //}
-
-        //_f.assign(f);
-        //_jacobian.assign(jacobian);
-
-        for (size_t i = 0; i < rays_.size(); i++) {
-            cv::Point3d p = rays_[i].dir.cross(x - cv::Vec3d(rays_[i].origin));
-
-            f(i, 0) = std::pow(cv::norm(p), 2);
+                /*
+                //using estimated derivatives
+                constexpr const double eps = 1e-10;
+                *pJ++ = (GaussianModel::Compute(x, mu+eps, sigma)-GaussianModel::Compute(x, mu-eps, sigma))/(2*eps);
+                *pJ++ = (GaussianModel::Compute(x, mu, sigma+eps)-GaussianModel::Compute(x, mu, sigma-eps))/(2*eps);
+                */
+            }
         }
-
-        _f.assign(f);
 
         return true;
     }
@@ -159,17 +164,8 @@ public:
             for(const auto& ray : rays){
                 std::cout << ray.origin << " : " << ray.dir << std::endl;
             }
-
-
-            // cv::Mat mat = tdr::Camera::toRotMatrix(cameras[0]->rquat);
-            // cv::Vec3d pt(1, 0, 0);
-            // std::cout << mat * pt << std::endl;
-
-            // std::cout << rotatePointByQuaternion(pt, cameras[0]->rquat) << std::endl;
-            // std::cout << findRotationQuaternion(cameras[0]->rquat) << std::endl;
-            // std::cout << rotateVectorByQuaternion({1, 0, 0}, cameras[0]->rquat) << std::endl;
-            // std::cout << "HALO: " << rotateVectorByQuaternion(r, cameras[0]->rquat) << std::endl;
-            // result.push_back(triangulatePoint(rays));
+            
+            result.push_back(triangulatePoint(rays));
 		}
 
         return result;
