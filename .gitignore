@@ -22,6 +22,10 @@ _deps
 
 main
 
+*.avi.csv
+*.avi
+*.mp4
+
 # Distribution / packaging
 .Python
 build/
