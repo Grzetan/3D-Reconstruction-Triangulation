@@ -12,7 +12,7 @@ struct Ray {
 
 class RayClosestPoint : public cv::LMSolver::Callback {
 public:
-    explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=1e-6) : rays_(rays), epsilon_(epsilon) {}
+    explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=1e-14) : rays_(rays), epsilon_(epsilon) {}
 
     bool compute(cv::InputArray params, cv::OutputArray err, cv::OutputArray J) const override {
         cv::Mat paramMat = params.getMat().reshape(1, 1);
@@ -158,14 +158,14 @@ public:
                 rays.push_back(createRayForPoint(cameras[i], p[i]));
             }
 
+            for(const auto& ray : rays){
+                std::cout << ray.origin << " = " << ray.origin + 50*ray.dir << std::endl;
+            }
+            
             if (rays.size() < 2) {
                 throw std::runtime_error("Too few rays are found");
             }
 
-            for(const auto& ray : rays){
-                std::cout << ray.origin << " : " << ray.dir << std::endl;
-            }
-            
             result.push_back(triangulatePoint(rays));
 		}
 
