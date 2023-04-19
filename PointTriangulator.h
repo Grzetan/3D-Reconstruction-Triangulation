@@ -12,7 +12,7 @@ struct Ray {
 
 class RayClosestPoint : public cv::LMSolver::Callback {
 public:
-    explicit RayClosestPoint(const std::vector<Ray>& rays) : rays_(rays) {}
+    explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=1e-6) : rays_(rays), epsilon_(epsilon) {}
 
     bool compute(cv::InputArray params, cv::OutputArray err, cv::OutputArray J) const override {
         cv::Mat paramMat = params.getMat().reshape(1, 1);
@@ -24,9 +24,7 @@ public:
         err.create(static_cast<int>(rays_.size()), 1, CV_64FC1);
         cv::Mat errMat = err.getMat();
         errMat.forEach<double>([&](double& e, const int* position) {
-            const Ray& r = rays_[position[0]];
-            cv::Point3d p = r.dir.cross(currentPoint - cv::Vec3d(r.origin));
-            e = std::pow(cv::norm(p), 2);
+            e = distToRay(rays_[position[0]], currentPoint);
         });
 
         if (J.needed())
@@ -35,18 +33,10 @@ public:
             cv::Mat Jmat = J.getMat();
             for(int row = 0 ; row<Jmat.rows ; ++row){
                 double* pJ = Jmat.ptr<double>(row);
-                // const double x = this->samplesXY[row].first;
 
-                // //using analytic derivatives
-                // *pJ++ = GaussianModel::ComputeDeriveMu(x, mu, sigma);
-                // *pJ++ = GaussianModel::ComputeDeriveSigma(x, mu, sigma);
-
-                /*
-                //using estimated derivatives
-                constexpr const double eps = 1e-10;
-                *pJ++ = (GaussianModel::Compute(x, mu+eps, sigma)-GaussianModel::Compute(x, mu-eps, sigma))/(2*eps);
-                *pJ++ = (GaussianModel::Compute(x, mu, sigma+eps)-GaussianModel::Compute(x, mu, sigma-eps))/(2*eps);
-                */
+                *pJ++ = (distToRay_(rays_[row], {x+epsilon_, y, z}) - distToRay_(rays_[row], {x-epsilon_, y, z})) / (2*epsilon_);
+                *pJ++ = (distToRay_(rays_[row], {x, y+epsilon_, z}) - distToRay_(rays_[row], {x, y-epsilon_, z})) / (2*epsilon_);
+                *pJ++ = (distToRay_(rays_[row], {x, y, z+epsilon_}) - distToRay_(rays_[row], {x, y, z-epsilon_})) / (2*epsilon_);
             }
         }
 
@@ -55,6 +45,17 @@ public:
 
 private:
     std::vector<Ray> rays_;
+    const double epsilon_;
+
+    static double distToRay(const Ray& r, const cv::Vec3d& p, bool squared=true){
+        cv::Point3d result = r.dir.cross(p - cv::Vec3d(r.origin));
+        if(squared) return result.x*result.x + result.y*result.y + result.z*result.z;
+        return std::sqrt(result.x*result.x + result.y*result.y + result.z*result.z);
+    }
+
+    static double distToRay_(const Ray& r, const cv::Vec3d p, bool squared=true){
+        return distToRay(r, p, squared);
+    }
 };
 
 class PointTriangulator {

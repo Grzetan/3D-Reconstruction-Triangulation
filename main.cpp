@@ -19,17 +19,17 @@ tdr::Camera* createCamera(size_t width, size_t height, double fovx, cv::Mat tran
 int main(){
     tdr::Camera* cam1 = createCamera(640, 480, 80, (cv::Mat_<double>(3, 1) << 10, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
     tdr::Camera* cam2 = createCamera(640, 480, 80, (cv::Mat_<double>(3, 1) << 0, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
-    tdr::Camera* cam3 = createCamera(640, 480, 80, (cv::Mat_<double>(3, 1) << -10, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
+    // tdr::Camera* cam3 = createCamera(640, 480, 80, (cv::Mat_<double>(3, 1) << -10, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
 
-    PointTriangulator projector({cam1, cam2, cam3});
+    PointTriangulator projector({cam1, cam2});
 
-    std::vector<std::vector<cv::Point2d>> points = { { {150, 240}, {320, 240}, {489, 240} } };
+    std::vector<std::vector<cv::Point2d>> points = { { {0, 240}, {639, 240} } };
 
 
     std::vector<cv::Point3d> triangulated = projector.triangulatePoints(points);
 
     for(const auto& p : triangulated){
-        std::cout << p << std::endl;
+        std::cout << "Triangulated point: " << p << std::endl;
     }
 
     return 0;
