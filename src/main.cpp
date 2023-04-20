@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include "PointTriangulator.h"
 #include "Camera.h"
+#include "pugixml.hpp"
 
 tdr::Camera* createCamera(size_t width, size_t height, double fovx, cv::Mat translation, cv::Mat rotation){
     tdr::Camera* cam = new tdr::Camera(0);
