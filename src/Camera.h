@@ -72,6 +72,16 @@ namespace tdr
 			cy = (int)round(height / 2.0);
 		}
 
+		/*! \brief Compute field of view x.
+		 *
+		 *	Focal length must be set elier.
+		 */
+		void compFovx()
+		{
+			if (fx == 0) throw std::runtime_error("Set fx first.");
+			fovx = 2 * std::atan(width / (2*fx)) * 57.2958;
+		}
+
 		/*! \brief Compute field of view y.
 		 *
 		 *	Field of view x must be set elier.
@@ -159,6 +169,7 @@ namespace tdr
 		void compCamParams()
 		{
 			compCxCy();
+			compFovx();
 			compFovy();
 			compFxFy();
 			compCamPos();
