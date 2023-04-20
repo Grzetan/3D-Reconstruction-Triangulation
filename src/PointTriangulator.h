@@ -166,7 +166,7 @@ public:
             }
 
             for(const auto& ray : rays){
-                std::cout << ray.origin << " = " << ray.origin + 50*ray.dir << std::endl;
+                std::cout << ray.origin << " = " << ray.origin + 10000*ray.dir << std::endl;
             }
             
             if (rays.size() < 2) {

@@ -120,18 +120,32 @@ int main(){
     std::vector<const tdr::Camera*> cameras = loadCamerasXML("Dron T02.xcp");
 
     // First dim = n_camera, second_dim = n_points
-    std::vector<std::vector<cv::Point2d>> drones2D;
-    load2DPoints("./referenceBB", drones2D);
+    // std::vector<std::vector<cv::Point2d>> drones2D;
+    // load2DPoints("./referenceBB", drones2D);
 
-    for(int i=0; i<5; i++){
-        for(int j=0; j<drones2D.size(); j++){
-            std::cout << "[ " << drones2D[j][i].x << " " << drones2D[j][i].y << " ], ";
-        }
-        std::cout << std::endl;
+    // for(int i=0; i<5; i++){
+    //     for(int j=0; j<drones2D.size(); j++){
+    //         std::cout << drones2D[j][i] << ", ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
+    // for(const auto& cam : cameras){
+    //     std::cout << cam->getCamId() << std::endl << "Position: \n" << cam->tvec << std::endl << "\nOrientation: \n" << cam->rquat << std::endl << "\n\n\n";
+    // }
+
+
+    // Second and third camera is inversed???
+    PointTriangulator projector(cameras);
+
+    std::vector<std::vector<cv::Point2d>> points = { { {962, 541} }, { {962, 541} }, { {962, 541} }, { {962, 541} } };
+
+    std::vector<cv::Point3d> triangulated = projector.triangulatePoints(points);
+
+    for(const auto& p : triangulated){
+        std::cout << "Triangulated point: " << p << std::endl;
     }
 
-    PointTriangulator projector(cameras);
 
     return 0;
 }
