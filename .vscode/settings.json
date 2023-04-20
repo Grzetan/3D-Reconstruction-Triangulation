@@ -59,7 +59,8 @@
         "mutex": "cpp",
         "semaphore": "cpp",
         "stop_token": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "codecvt": "cpp"
     },
     "C_Cpp.default.includePath": [
         "/usr/local/include/opencv4/**",

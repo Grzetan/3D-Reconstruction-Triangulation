@@ -179,7 +179,7 @@ namespace tdr
 			diagonal = (int)sqrt(width * width + height * height);
 		}
 
-		int getCamId() { return id; }
+		int getCamId() const { return id; }
 
 		/*! \brief Project 3D point to image space.
 		 *

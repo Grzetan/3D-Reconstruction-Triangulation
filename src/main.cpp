@@ -1,10 +1,14 @@
-#include "iostream"
+#include <iostream>
 #include <opencv2/opencv.hpp>
+#include <filesystem>
+#include <fstream>
 #include "PointTriangulator.h"
 #include "Camera.h"
 #include "pugixml.hpp"
 
-tdr::Camera* createCamera(int id, size_t width, size_t height, double focalLength, cv::Mat translation, cv::Mat rotation){
+using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+
+const tdr::Camera* createCamera(int id, size_t width, size_t height, double focalLength, cv::Mat translation, cv::Mat rotation){
     tdr::Camera* cam = new tdr::Camera(id);
     cam->width = width;
     cam->height = height;
@@ -17,13 +21,13 @@ tdr::Camera* createCamera(int id, size_t width, size_t height, double focalLengt
     return cam;
 }
 
-std::vector<tdr::Camera*> loadCamerasXML(const char* path){
+std::vector<const tdr::Camera*> loadCamerasXML(const char* path){
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(path);
     if (!result)
         throw std::runtime_error("Cannot open camera XML file");
 
-    std::vector<tdr::Camera*> cameras;
+    std::vector<const tdr::Camera*> cameras;
 
     for (pugi::xml_node camera : doc.child("Cameras").children("Camera")){
         pugi::xml_node controlFrame = camera.child("ControlFrames").child("ControlFrame");
@@ -53,11 +57,43 @@ std::vector<tdr::Camera*> loadCamerasXML(const char* path){
         double w, i, j, k;
         orientation >> w >> i >> j >> k;
 
-        tdr::Camera* cam = createCamera(id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z), (cv::Mat_<double>(4, 1) << w, i, j, k));
+        const tdr::Camera* cam = createCamera(id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z), (cv::Mat_<double>(4, 1) << w, i, j, k));
         cameras.push_back(cam);
     }
 
     return cameras;
+}
+
+void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& points, int offset = 5){
+    std::vector<std::string> files;
+    for (const auto& dirEntry : recursive_directory_iterator(path)){
+        std::string directory = dirEntry.path().u8string();
+        if(directory.find(".csv") != std::string::npos && directory.find(".avi") == std::string::npos){
+            files.push_back(directory);
+        }
+    }
+
+    std::sort(files.begin(), files.end());
+    std::string line, token;
+    int frame, x1, y1, x2, y2;
+
+    for(auto& f : files){
+        int i=0;
+        std::ifstream file(f);
+        points.push_back({}); // Add new vector for current camera
+        while (std::getline(file, line)){
+            if(offset > i++) continue; // Skip first `offset` lines
+            std::istringstream iss(line);
+            std::vector<int> seperatedLine;
+
+            while(std::getline(iss, token, ',')) {
+                seperatedLine.push_back(std::stoi(token));
+            }
+            cv::Point2d point(seperatedLine[1] + (seperatedLine[3] - seperatedLine[1]) / 2, 
+                              seperatedLine[2] + (seperatedLine[4] - seperatedLine[2]) / 2);
+            points[points.size()-1].push_back(point);
+        }
+    }
 }
 
 int main(){
@@ -81,10 +117,21 @@ int main(){
     //     std::cout << "Triangulated point: " << p << std::endl;
     // }
 
-    std::vector<tdr::Camera*> cameras = loadCamerasXML("Dron T02.xcp");
-    for(const auto& cam : cameras){
-        std::cout << cam->fovx << ", " << cam->fovy << ", " << std::endl;
+    std::vector<const tdr::Camera*> cameras = loadCamerasXML("Dron T02.xcp");
+
+    // First dim = n_camera, second_dim = n_points
+    std::vector<std::vector<cv::Point2d>> drones2D;
+    load2DPoints("./referenceBB", drones2D);
+
+    for(int i=0; i<5; i++){
+        for(int j=0; j<drones2D.size(); j++){
+            std::cout << "[ " << drones2D[j][i].x << " " << drones2D[j][i].y << " ], ";
+        }
+        std::cout << std::endl;
+
     }
+
+    PointTriangulator projector(cameras);
 
     return 0;
 }

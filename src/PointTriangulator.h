@@ -145,17 +145,24 @@ class PointTriangulator {
 public:
 	PointTriangulator(std::vector<const tdr::Camera*> cameras_) : cameras(cameras_) {};
 
-	// first dim = n_points
-	// second dim = n_cameras
+	// first dim = n_cameras
+	// second dim = n_points
 	std::vector<cv::Point3d> triangulatePoints(std::vector<std::vector<cv::Point2d>> points) {
-		std::vector<cv::Point3d> result;
+		// Check if dims are correct
+        for(int i=0; i<points.size() - 1; i++){
+            if(points[i].size() != points[i+1].size()) 
+                throw std::runtime_error("Every camera should have the same number of points");
+        }
+        
+        std::vector<cv::Point3d> result;
 
-		for (const auto& p : points) {
+
+        for(int n_point=0; n_point<points[0].size(); n_point++){ // For every point
             std::vector<Ray> rays;
-            for (int i = 0; i < p.size(); i++) {
-                if (p[i].x == -1 || p[i].y == -1) continue;
+            for (int n_cam = 0; n_cam < points.size(); n_cam++) {
+                if (points[n_cam][n_point].x == -1 || points[n_cam][n_point].y == -1) continue;
 
-                rays.push_back(createRayForPoint(cameras[i], p[i]));
+                rays.push_back(createRayForPoint(cameras[n_cam], points[n_cam][n_point]));
             }
 
             for(const auto& ray : rays){
@@ -167,7 +174,7 @@ public:
             }
 
             result.push_back(triangulatePoint(rays));
-		}
+        }
 
         return result;
 	}
