@@ -33,13 +33,25 @@ Installed opencv, follow this tutorial: (https://www.geeksforgeeks.org/how-to-in
 Program takes in as input XML file with camera's data (their's extrinsic and intrinsic parameters) and seperate CSV file for every camera. Each row in this input file corresponds to coordinatates (x1, y1, x2, y2) of bounding box.
 
 - Camera's file
-For camera's XML file it creates vector of custom objects that hold camera's information. Note that this vector contain only valid cameras (go to the last four cameras objects in `Dron T02.xcp` file to see valid structure). Every camera has it's ID (it is required that camera's positions in XML file are sorted `ascending` by their's ID's).
+For camera's XML file it creates vector of custom objects that hold camera's information. Note that this vector contain only valid cameras (go to the last four cameras objects in `cameras.xml` file to see valid structure). Every camera has it's ID (it is required that camera's positions in XML file are sorted `ascending` by their's ID's).
 
 - Detection's file
-For every CSV file we first check to which camera this file is corelelated. Remeber to place CSV files in the same folder and have them in the same order as camera's object's in XML file (Give your cameras some ID's and use corresponding ID's in the name of CSV files). After processing all of the CSV files 2D vector of `cv::Point2d` is created `(n_cams, n_points)`, first dimention corresponds to number of cameras and second dimention corresponds to number of points. Remeber that number of rows in all of the CSV files must be equal. If object isn't detected on frame just pass it as empty row with ID. Each entry in this vector corresponds to pixel coordinates of the center of the bounding box.
+For every CSV file we first check to which camera this file is corelelated. Remeber to place CSV files in the same folder and have them in the same order as camera's object's in XML file (Give your cameras some ID's and use corresponding ID's in the name of CSV files). After processing all of the CSV files 2D vector of `cv::Point2d` is created `(n_cams, n_points)`, first dimention corresponds to number of cameras and second dimention corresponds to number of points. Remeber that number of rows in all of the CSV files must be equal. If object isn't detected on frame just pass it as empty row with ID. Each entry in this vector corresponds to pixel coordinates of the center of the bounding box. See CSV files in `referenceBB` folder to see correct structure.
 
 - Output file
-Program creates output PLY file which contains all of the triangulated points, open it in blender to see the path.
+Program creates `output.ply` file which contains all of the triangulated points, open it in blender to see the path.
+
+When you have these files in place run
+
+```bash
+cmake . & make
+```
+
+This will create output binary file `main`, run it by:
+
+```bash
+./main cameras.xml ./referenceBB
+```
 
 
 ### How it works <a name="how-it-works"></a>

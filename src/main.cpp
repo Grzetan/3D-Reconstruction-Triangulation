@@ -64,7 +64,7 @@ std::vector<const tdr::Camera*> loadCamerasXML(const char* path){
     return cameras;
 }
 
-void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& points, int offset = 5){
+void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& points, int offset = 1){
     std::vector<std::string> files;
     for (const auto& dirEntry : recursive_directory_iterator(path)){
         std::string directory = dirEntry.path().u8string();
@@ -103,7 +103,7 @@ void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& point
     }
 }
 
-int main(){
+int main(int argc, const char** argv){
     // tdr::Camera* cam1 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 0, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
     // tdr::Camera* cam2 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 200, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
     // tdr::Camera* cam3 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 10, -3, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
@@ -124,7 +124,9 @@ int main(){
     //     std::cout << "Triangulated point: " << p << std::endl;
     // }
 
-    std::vector<const tdr::Camera*> cameras = loadCamerasXML("Dron T02.xcp");
+    if(argc != 3) throw std::runtime_error("Input paths must be provided");
+
+    std::vector<const tdr::Camera*> cameras = loadCamerasXML(argv[1]);
 
     // First dim = n_camera, second_dim = n_points
     // std::vector<std::vector<cv::Point2d>> drones2D;

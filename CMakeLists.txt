@@ -11,7 +11,7 @@ set(SOURCE_FILES
 
 add_executable( ${EXE_NAME} ${PATH}/main.cpp ${SOURCE_FILES} )
 target_link_libraries( ${EXE_NAME} ${OpenCV_LIBS} )
-add_custom_command(TARGET ${EXE_NAME}
-                   COMMAND ${EXE_NAME}
-                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                   COMMENT "Running ${EXE_NAME}")
+# add_custom_command(TARGET ${EXE_NAME}
+#                    COMMAND ${EXE_NAME}
+#                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#                    COMMENT "Running ${EXE_NAME}")
