@@ -89,8 +89,15 @@ void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& point
             while(std::getline(iss, token, ',')) {
                 seperatedLine.push_back(std::stoi(token));
             }
-            cv::Point2d point(seperatedLine[1] + (seperatedLine[3] - seperatedLine[1]) / 2, 
-                              seperatedLine[2] + (seperatedLine[4] - seperatedLine[2]) / 2);
+
+            cv::Point2d point;
+            if(seperatedLine.size() < 5){
+                point.x = -1;
+                point.y = -1;
+            }else{
+                point.x = seperatedLine[1] + (seperatedLine[3] - seperatedLine[1]) / 2; 
+                point.y = seperatedLine[2] + (seperatedLine[4] - seperatedLine[2]) / 2;
+            }
             points[points.size()-1].push_back(point);
         }
     }

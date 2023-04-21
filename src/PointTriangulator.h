@@ -4,6 +4,7 @@
 #include "Camera.h"
 
 # define PI 3.14159265358979323846
+# define THRESHOLD 1e-14
 
 struct Ray {
     cv::Point3d origin;
@@ -12,7 +13,7 @@ struct Ray {
 
 class RayClosestPoint : public cv::LMSolver::Callback {
 public:
-    explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=1e-14) : rays_(rays), epsilon_(epsilon) {}
+    explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=THRESHOLD) : rays_(rays), epsilon_(epsilon) {}
 
     bool compute(cv::InputArray params, cv::OutputArray err, cv::OutputArray J) const override {
         cv::Mat paramMat = params.getMat().reshape(1, 1);
