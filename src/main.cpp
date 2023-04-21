@@ -55,7 +55,7 @@ std::vector<const tdr::Camera*> loadCamerasXML(const char* path){
         // Read orientation
         std::stringstream orientation = std::stringstream(controlFrame.attribute("ORIENTATION").value());
         double w, i, j, k;
-        orientation >> w >> i >> j >> k;
+        orientation >> i >> j >> k >> w;
 
         const tdr::Camera* cam = createCamera(id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z), (cv::Mat_<double>(4, 1) << w, i, j, k));
         cameras.push_back(cam);
@@ -130,9 +130,9 @@ int main(){
     //     std::cout << std::endl;
     // }
 
-    // for(const auto& cam : cameras){
-    //     std::cout << cam->getCamId() << std::endl << "Position: \n" << cam->tvec << std::endl << "\nOrientation: \n" << cam->rquat << std::endl << "\n\n\n";
-    // }
+    for(const auto& cam : cameras){
+        std::cout << cam->getCamId() << std::endl << "Position: \n" << cam->tvec << std::endl << "\nOrientation: \n" << cam->rquat << std::endl << "\n\n\n";
+    }
 
 
     // Second and third camera is inversed???
