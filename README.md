@@ -33,7 +33,7 @@ Installed opencv, follow this tutorial: (https://www.geeksforgeeks.org/how-to-in
 Program takes in as input XML file with camera's data (their's extrinsic and intrinsic parameters) and seperate CSV file for every camera. Each row in this input file corresponds to coordinatates (x1, y1, x2, y2) of bounding box.
 
 - Camera's file
-For camera's XML file it creates vector of custom objects that hold camera's information. Note that this vector contain only valid cameras (go to the last four cameras objects in `cameras.xml` file to see valid structure). Every camera has it's ID (it is required that camera's positions in XML file are sorted `ascending` by their's ID's).
+For camera's XML file it creates vector of custom objects that hold camera's information. Note that this vector contain only valid cameras (go to the last four cameras objects in `cameras.xml` file to see valid structure). Every camera has it's ID (it is required that camera's positions in XML file are sorted `ascending` by their's ID's). Note that orientation of camera is a rotation quaternion passed as `(i, j, k, w)`.
 
 - Detection's file
 For every CSV file we first check to which camera this file is corelelated. Remeber to place CSV files in the same folder and have them in the same order as camera's object's in XML file (Give your cameras some ID's and use corresponding ID's in the name of CSV files). After processing all of the CSV files 2D vector of `cv::Point2d` is created `(n_cams, n_points)`, first dimention corresponds to number of cameras and second dimention corresponds to number of points. Remeber that number of rows in all of the CSV files must be equal. If object isn't detected on frame just pass it as empty row with ID. Each entry in this vector corresponds to pixel coordinates of the center of the bounding box. See CSV files in `referenceBB` folder to see correct structure.
@@ -63,7 +63,7 @@ In `triangulatePoints` we first check correctness of passed 2D vector of points 
 
 Then for every point `Ray` is created. Ray is simply a half line in 3D space. It starts in the same position as it's camera and it's orientation is orientation of camera adjusted to point's pixel coordinates. This ray represent possible 3D positions of this pixel in space.
 
-For example if our camera is rotated as camera on picture those are rays that will be created for different pixel coordinates (for simplicity camera's image size is `[640, 480]`):
+To get ray's direction `pixel ray` is calculated. Here are a few examples of `pixel rays` that will be created for different pixel coordinates (for simplicity camera's image size is `[640, 480]`):
 
 Pixel coordinates: `[0,0]`:
 
@@ -85,6 +85,10 @@ Pixel coordinates: `[320, 240]`:
 
 ![image](imgs/center.png)
 
+
+In our case `test camera` (test camera means hypothetical camera used to generate `pixel rays`, it doesn't include real camera orientation) is looking along positive `x axis`, it's because `identity quaternion` is also looking along positive `x axis`.
+
+So `pixel ray` doesn't include camera's rotation, to include camera's rotation we just simply rotate `pixel ray` by camera's orientation quaternion. After this operation we have successfully calculated `ray` for detected bounding box.
 
 If there was no boundig box for some camera in some frame then we simply don't generate a ray.
 
