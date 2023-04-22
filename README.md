@@ -98,4 +98,48 @@ Jacobian matrix is calculated using estimated partial derivatives so some kind o
 
 After calculating 3D point for each frame, vector of those points is returned.
 
+-----
 
+Algorithm idea for single drone tracking.
+
+#### Problem 1 - Classifying drones on starting frame.
+
+It is required that we know which drone is which on starting frame so for example drone `1` is the same drone on each camera.
+
+We can achive this by two ways:
+
+1. We classify drones incrementally:
+    - For every bounding box on the first frame on the first camera we create seperate ID. Those will be ID's assigned to drones. Then for every ID we run `PointTriangulator` with every bounding box on the first frame on the second camera and assign ID's by picking bounding boxes which have smallest error. We than repeat these steps for all of the cameras.
+    Here is a pseudo code that hopefully explains it:
+    ```
+    paths = [] // 2D vector containing vector of paths for every camera
+    drones = [] // 2D vector containing rays for each drone
+    for box in first_frame_first_camera
+        drones <-- vector with ray for box // After this drones size will be [n_boxes, 1]
+        paths[0] <-- path with starting point at center of box and ID equal to box_position
+
+    for cam in all_cams_except_first
+        for drone in drones
+            smallest_error = 1e+9 // absurdly high value
+            best_box = 0
+            for box in first_frame_current_cam
+                if triangulate_error < smallest_error
+                    smallest_error = triangulate_error
+                    best_box = box_position
+            drones[drone_position] <-- ray for best_box
+            paths[cam_position] <-- path with starting point at center of best_box and ID equal to drone_position
+    ```
+
+    - After that we have a vector of path for every camera which will allow us to track each drone.
+
+    - !!! Note that only requirement for this is that every drone must be detected on the first frame on every camera !!!
+
+    - (Some kind of threshold can be added for triangulation_error so not every drone must be visible on the fist frame. If algorithm encounters new drone later we can simply create a new path).
+
+2. We classify drones `all at once`:
+
+    - We create every combination of bounding boxes on first frame on every camera (`n_drones ^ n_cameras` combinations ). We than pick `n_drones` combinations with best triangulation error and create paths from saved pixel coordinates from every camera. 
+
+    - This approach can be more accurate but more computationally expensive.
+
+#### Problem 1 - Keeping track of drones
