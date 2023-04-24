@@ -103,14 +103,49 @@ void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& point
     }
 }
 
+void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangulatedPoints, const std::vector<const tdr::Camera*>& cameras = {}){
+    std::ofstream out(path);
+    out << "ply\n";
+    out << "format ascii 1.0\n";
+    out << "element vertex " << triangulatedPoints.size() + cameras.size() * 3 << "\n";
+    out << "property float x\n";
+    out << "property float y\n";
+    out << "property float z\n";
+    out << "element face " << cameras.size() << "\n";
+    out << "property list uchar int vertex_index\n";
+    out << "end_header\n";
+
+    double camSize = 0.5;
+
+    // Visualize cameras
+    for(const auto& cam : cameras){
+        double x = cam->camPos.at<double>(0,0) / 100.0;
+        double y = cam->camPos.at<double>(1,0) / 100.0;
+        double z = cam->camPos.at<double>(2,0) / 100.0;
+
+        out << x - camSize << " " << y - camSize << " " << z - camSize << "\n";
+        out << x + camSize << " " << y + camSize << " " << z + camSize << "\n";
+        out << "0 0 0" << "\n";
+    }
+
+    // Visualize paths
+    for(const auto& p : triangulatedPoints){
+        out << p.x / 100.0 << " " << p.y / 100.0 << " " << p.z / 100.0 << "\n";
+    }
+
+    for(int i=0; i<cameras.size(); i++){
+        out << "3 " << i*3 << " " << i*3 + 1 << " " << i*3 + 2 << "\n";
+    }
+}
+
 int main(int argc, const char** argv){
-    if(argc != 3) throw std::runtime_error("Input paths must be provided");
+    if(argc != 3 && argc != 4) throw std::runtime_error("Input paths must be provided");
 
     std::vector<const tdr::Camera*> cameras = loadCamerasXML(argv[1]);
 
     // First dim = n_camera, second_dim = n_points
     std::vector<std::vector<cv::Point2d>> dronePoints;
-    load2DPoints("./referenceBB", dronePoints);
+    load2DPoints(argv[2], dronePoints);
 
     // for(int i=0; i<5; i++){
     //     for(int j=0; j<drones2D.size(); j++){
@@ -130,21 +165,8 @@ int main(int argc, const char** argv){
 
     std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
 
-    std::ofstream out("output.ply");
-    out << "ply\n";
-    out << "format ascii 1.0\n";
-    out << "element vertex " << triangulatedPoints.size() << "\n";
-    out << "property float x\n";
-    out << "property float y\n";
-    out << "property float z\n";
-    out << "element face 0\n";
-    out << "property list uchar int vertex_index\n";
-    out << "end_header\n";
-
-    for(const auto& p : triangulatedPoints){
-        out << p.x << " " << p.y << " " << p.z << "\n";
-    }
-
+    const char* path = (argc == 4) ? argv[3] : "output.ply";
+    writeOutputFile(path, triangulatedPoints, cameras);
 
     return 0;
 }
