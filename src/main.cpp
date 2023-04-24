@@ -104,33 +104,13 @@ void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& point
 }
 
 int main(int argc, const char** argv){
-    // tdr::Camera* cam1 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 0, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
-    // tdr::Camera* cam2 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 200, 0, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
-    // tdr::Camera* cam3 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 10, -3, 0), (cv::Mat_<double>(4, 1) << 0.7071, 0, 0.7071, 0));
-
-    // tdr::Camera* cam1 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 0, 0, 0), (cv::Mat_<double>(4, 1) << 0.854, -0.146, 0.354, 0.354));
-    // tdr::Camera* cam2 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 20, 0, 0), (cv::Mat_<double>(4, 1) << 0.354, -0.354, 0.146, 0.854));
-    // tdr::Camera* cam3 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 20, 20, 0), (cv::Mat_<double>(4, 1) << -0.354, -0.354, -0.146, 0.854));
-    // tdr::Camera* cam4 = createCamera(640, 480, 70, (cv::Mat_<double>(3, 1) << 0, 20, 0), (cv::Mat_<double>(4, 1) << 0.854, 0.146, 0.354, -0.354));
-
-    // PointTriangulator projector({cam1, cam2});
-
-    // std::vector<std::vector<cv::Point2d>> points = { { {639, 240}, {0, 240} } };
-
-
-    // std::vector<cv::Point3d> triangulated = projector.triangulatePoints(points);
-
-    // for(const auto& p : triangulated){
-    //     std::cout << "Triangulated point: " << p << std::endl;
-    // }
-
     if(argc != 3) throw std::runtime_error("Input paths must be provided");
 
     std::vector<const tdr::Camera*> cameras = loadCamerasXML(argv[1]);
 
     // First dim = n_camera, second_dim = n_points
-    // std::vector<std::vector<cv::Point2d>> drones2D;
-    // load2DPoints("./referenceBB", drones2D);
+    std::vector<std::vector<cv::Point2d>> dronePoints;
+    load2DPoints("./referenceBB", dronePoints);
 
     // for(int i=0; i<5; i++){
     //     for(int j=0; j<drones2D.size(); j++){
@@ -139,20 +119,30 @@ int main(int argc, const char** argv){
     //     std::cout << std::endl;
     // }
 
-    for(const auto& cam : cameras){
-        std::cout << cam->getCamId() << std::endl << "Position: \n" << cam->tvec << std::endl << "\nOrientation: \n" << cam->rquat << std::endl << "\n\n\n";
-    }
+    // for(const auto& cam : cameras){
+    //     std::cout << cam->getCamId() << std::endl << "Position: \n" << cam->tvec << std::endl << "\nOrientation: \n" << cam->rquat << std::endl << "\n\n\n";
+    // }
 
 
-    // Second and third camera is inversed???
     PointTriangulator projector(cameras);
 
-    std::vector<std::vector<cv::Point2d>> points = { { {962, 541} }, { {962, 541} }, { {962, 541} }, { {962, 541} } };
+    // std::vector<std::vector<cv::Point2d>> points = { { {962, 541} }, { {962, 541} }, { {962, 541} }, { {962, 541} } };
 
-    std::vector<cv::Point3d> triangulated = projector.triangulatePoints(points);
+    std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
 
-    for(const auto& p : triangulated){
-        std::cout << "Triangulated point: " << p << std::endl;
+    std::ofstream out("output.ply");
+    out << "ply\n";
+    out << "format ascii 1.0\n";
+    out << "element vertex " << triangulatedPoints.size() << "\n";
+    out << "property float x\n";
+    out << "property float y\n";
+    out << "property float z\n";
+    out << "element face 0\n";
+    out << "property list uchar int vertex_index\n";
+    out << "end_header\n";
+
+    for(const auto& p : triangulatedPoints){
+        out << p.x << " " << p.y << " " << p.z << "\n";
     }
 
 

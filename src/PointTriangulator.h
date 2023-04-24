@@ -157,7 +157,6 @@ public:
         
         std::vector<cv::Point3d> result;
 
-
         for(int n_point=0; n_point<points[0].size(); n_point++){ // For every point
             std::vector<Ray> rays;
             for (int n_cam = 0; n_cam < points.size(); n_cam++) {
@@ -166,9 +165,9 @@ public:
                 rays.push_back(createRayForPoint(cameras[n_cam], points[n_cam][n_point]));
             }
 
-            for(const auto& ray : rays){
-                std::cout << ray.origin << " = " << ray.origin + 10000*ray.dir << std::endl;
-            }
+            // for(const auto& ray : rays){
+            //     std::cout << ray.origin << " = " << ray.origin + 10000*ray.dir << std::endl;
+            // }
             
             if (rays.size() < 2) {
                 throw std::runtime_error("Too few rays are found");

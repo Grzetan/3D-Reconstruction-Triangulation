@@ -7,6 +7,8 @@ __pycache__/
 *.so
 *.out
 
+*.ply
+
 #.vscode/
 CMakeLists.txt.user
 CMakeCache.txt
