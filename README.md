@@ -111,7 +111,7 @@ We can achive this by two ways:
 1. We classify drones incrementally:
     - For every bounding box on the first frame on the first camera we create seperate ID. Those will be ID's assigned to drones. Then for every ID we run `PointTriangulator` with every bounding box on the first frame on the second camera and assign ID's by picking bounding boxes which have smallest error. We than repeat these steps for all of the cameras.
     Here is a pseudo code that hopefully explains it:
-    ```
+    ```c++
     paths = [] // 2D vector containing vector of paths for every camera
     drones = [] // 2D vector containing rays for each drone
     for box in first_frame_first_camera
@@ -132,14 +132,45 @@ We can achive this by two ways:
 
     - After that we have a vector of path for every camera which will allow us to track each drone.
 
-    - !!! Note that only requirement for this is that every drone must be detected on the first frame on every camera !!!
+    - I'm not sure that we can guarantee than drone classification on every camera will be 100% correct.
+
+    - Note that only requirement for this is that every drone must be detected on the first frame on every camera
 
     - (Some kind of threshold can be added for triangulation_error so not every drone must be visible on the fist frame. If algorithm encounters new drone later we can simply create a new path).
 
 2. We classify drones `all at once`:
 
-    - We create every combination of bounding boxes on first frame on every camera (`n_drones ^ n_cameras` combinations ). We than pick `n_drones` combinations with best triangulation error and create paths from saved pixel coordinates from every camera. 
+    - We create every combination of bounding boxes on first frame on every camera (`n_drones ^ n_cameras` combinations ). We than pick `n_drones` combinations with best triangulation error and create paths from saved pixel coordinates from every camera. When picking best combinations it is remembered that final set of combinations must have every box from every cam. 
 
     - This approach can be more accurate but more computationally expensive.
 
+    - The only requirement for this is that every drone must be detected on the first frame on every camera
+
 #### Problem 1 - Keeping track of drones
+
+After we successfully classified bounding boxes on the first frame we have to classify bounding boxes on the rest of the frames.
+
+These ideas must be repeated for every camera
+
+Here are the two main ideas:
+
+1. Classify using last point in path
+    - To classify detected bounding boxes on new frame we add them to the closest path.
+
+    - Here is a pseudo code:
+
+    ```c++
+    classified_boxes = [-1, -1, ..., -1] // Size equal to number of bounding boxes on frame
+    for path in every_path_for_camera:
+        box = bounding box that is closest to last point in path
+        path <-- coordinates of box
+        classified_boxes[box_position] <-- path_position
+    ```
+
+    - After classifying boxes for every camera we know wchich coordinates to pass to `PointTriangulator` and to which drone they correspond to.
+
+    - This approach can malfunction if on some frame drones are alligning, in that case some drones might be accidentally swaped.
+
+    - Is is immune to the lack of detection on some frame, we just simply don't update the path.
+
+2. Classify using 
