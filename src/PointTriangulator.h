@@ -4,7 +4,7 @@
 #include "Camera.h"
 
 # define PI 3.14159265358979323846
-# define THRESHOLD 1e-14
+# define THRESHOLD 5e-13
 
 struct Ray {
     cv::Point3d origin;
@@ -125,10 +125,10 @@ class PointTriangulator {
         cv::Vec3d ray;
         // We have to adjust coordinate space so it fits identity quaternion
         double x = ((double)cam->width / (double)cam->height) * ((2 * p.x / (double)cam->width) - 1);
-        double y = (2 * (cam->height - p.y) / (double)cam->height) - 1;
-        ray[0] = d;
+        double y = (2 * p.y / (double)cam->height) - 1;
+        ray[0] = x;
         ray[1] = y;
-        ray[2] = x;
+        ray[2] = d;
         return cv::normalize(ray);
     }
 

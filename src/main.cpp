@@ -57,7 +57,7 @@ std::vector<const tdr::Camera*> loadCamerasXML(const char* path){
         double w, i, j, k;
         orientation >> i >> j >> k >> w;
 
-        const tdr::Camera* cam = createCamera(id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z), (cv::Mat_<double>(4, 1) << w, i, j, k));
+        const tdr::Camera* cam = createCamera(id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z), (cv::Mat_<double>(4, 1) << w, -i, -j, -k));
         cameras.push_back(cam);
     }
 
@@ -81,7 +81,10 @@ void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& point
         int i=0;
         std::ifstream file(f);
         points.push_back({}); // Add new vector for current camera
-        while (std::getline(file, line)){
+
+        int n_lines = 200;
+
+        while (std::getline(file, line) && n_lines--){
             if(offset > i++) continue; // Skip first `offset` lines
             std::istringstream iss(line);
             std::vector<int> seperatedLine;
@@ -116,12 +119,13 @@ void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangula
     out << "end_header\n";
 
     double camSize = 0.5;
+    double scale = 0.01;
 
     // Visualize cameras
     for(const auto& cam : cameras){
-        double x = cam->camPos.at<double>(0,0) / 100.0;
-        double y = cam->camPos.at<double>(1,0) / 100.0;
-        double z = cam->camPos.at<double>(2,0) / 100.0;
+        double x = cam->camPos.at<double>(0,0) * scale;
+        double y = cam->camPos.at<double>(1,0) * scale;
+        double z = cam->camPos.at<double>(2,0) * scale;
 
         out << x - camSize << " " << y - camSize << " " << z - camSize << "\n";
         out << x + camSize << " " << y + camSize << " " << z + camSize << "\n";
@@ -130,7 +134,7 @@ void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangula
 
     // Visualize paths
     for(const auto& p : triangulatedPoints){
-        out << p.x / 100.0 << " " << p.y / 100.0 << " " << p.z / 100.0 << "\n";
+        out << p.x * scale << " " << p.y * scale << " " << p.z * scale << "\n";
     }
 
     for(int i=0; i<cameras.size(); i++){
@@ -147,26 +151,18 @@ int main(int argc, const char** argv){
     std::vector<std::vector<cv::Point2d>> dronePoints;
     load2DPoints(argv[2], dronePoints);
 
-    // for(int i=0; i<5; i++){
-    //     for(int j=0; j<drones2D.size(); j++){
-    //         std::cout << drones2D[j][i] << ", ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
     // for(const auto& cam : cameras){
     //     std::cout << cam->getCamId() << std::endl << "Position: \n" << cam->tvec << std::endl << "\nOrientation: \n" << cam->rquat << std::endl << "\n\n\n";
     // }
 
-
     PointTriangulator projector(cameras);
 
-    // std::vector<std::vector<cv::Point2d>> points = { { {962, 541} }, { {962, 541} }, { {962, 541} }, { {962, 541} } };
+    // std::vector<std::vector<cv::Point2d>> points = { { {1292, 951} }, { {1063, 921} }, { {785, 877} }, { {798, 831} } };
 
     std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
-
+    
     const char* path = (argc == 4) ? argv[3] : "output.ply";
-    writeOutputFile(path, triangulatedPoints, cameras);
+    writeOutputFile(path, triangulatedPoints);
 
     return 0;
 }
