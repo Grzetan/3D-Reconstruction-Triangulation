@@ -82,9 +82,9 @@ void load2DPoints(const char* path, std::vector<std::vector<cv::Point2d>>& point
         std::ifstream file(f);
         points.push_back({}); // Add new vector for current camera
 
-        int n_lines = 200;
+        // int n_lines = 200;
 
-        while (std::getline(file, line) && n_lines--){
+        while (std::getline(file, line)){
             if(offset > i++) continue; // Skip first `offset` lines
             std::istringstream iss(line);
             std::vector<int> seperatedLine;
