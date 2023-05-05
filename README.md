@@ -8,7 +8,8 @@
 1. [Requirements](#requirements)
 2. [How to use](#how-to-use)
 3. [How it works](#how-it-works)
-5. [Examples](#examples) TODO
+4. [Drone tracking concept](#drone-tracking)
+5. [Results](#results)
 
 -----
 
@@ -103,11 +104,11 @@ Jacobian matrix is calculated using estimated partial derivatives so some kind o
 
 After calculating 3D point for each frame, vector of those points is returned.
 
------
+### Drone Tracking Concept <a name="drone-tracking"></a>
 
 Algorithm idea for single drone tracking.
 
-#### Problem 1 - Classifying drones on starting frame.
+##### Problem 1 - Classifying drones on starting frame.
 
 It is required that we know which drone is which on starting frame so for example drone `1` is the same drone on each camera.
 
@@ -151,7 +152,7 @@ We can achive this by two ways:
 
     - The only requirement for this is that every drone must be detected on the first frame on every camera
 
-#### Problem 1 - Keeping track of drones
+### Problem 2 - Keeping track of drones
 
 After we successfully classified bounding boxes on the first frame we have to classify bounding boxes on the rest of the frames.
 
@@ -178,4 +179,10 @@ Here are the two main ideas:
 
     - Is is immune to the lack of detection on some frame, we just simply don't update the path.
 
-2. Classify using 
+### Results <a name="results"></a>
+
+This algorithm gives very promising results. After looking at this example video and keeping track of drone's starting movement and landing movement we can clearly see that resulting path is nearly identical to real-life drone path.
+
+
+
+![image](imgs/result-path.png)
