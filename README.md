@@ -183,6 +183,8 @@ Here are the two main ideas:
 
 This algorithm gives very promising results. After looking at this example video and keeping track of drone's starting movement and landing movement we can clearly see that resulting path is nearly identical to real-life drone path.
 
+https://user-images.githubusercontent.com/52281852/236529833-4a88aa2c-12d0-4e60-8345-53f72cf3c8c1.mp4
 
+Resulting path:
 
 ![image](imgs/result-path.png)
