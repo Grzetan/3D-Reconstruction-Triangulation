@@ -121,7 +121,7 @@ class PointTriangulator {
         p.x += 0.5;
         p.y += 0.5; 
 
-        double d = 1 / std::tan(cam->fovx*0.0174533 / 2);
+        double d = 1 / std::tan(cam->fovy*0.0174533 / 2);
         cv::Vec3d ray;
         // We have to adjust coordinate space so it fits identity quaternion
         double x = ((double)cam->width / (double)cam->height) * ((2 * p.x / (double)cam->width) - 1);

@@ -151,18 +151,10 @@ int main(int argc, const char** argv){
     std::vector<std::vector<cv::Point2d>> dronePoints;
     load2DPoints(argv[2], dronePoints);
 
-    // for(const auto& cam : cameras){
-    //     std::cout << cam->getCamId() << std::endl << "Position: \n" << cam->tvec << std::endl << "\nOrientation: \n" << cam->rquat << std::endl << "\n\n\n";
-    // }
-
     PointTriangulator projector(cameras);
-
-    // std::vector<std::vector<cv::Point2d>> points = { { {1292, 951} }, { {1063, 921} }, { {785, 877} }, { {798, 831} } };
 
     std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
     
     const char* path = (argc == 4) ? argv[3] : "output.ply";
     writeOutputFile(path, triangulatedPoints);
-
-    return 0;
 }
