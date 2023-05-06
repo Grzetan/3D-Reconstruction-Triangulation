@@ -3,13 +3,18 @@ project( 3D-Drone-Reconstruction )
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 set(EXE_NAME main)
+set(TEST_EXE_NAME test)
 set(PATH "./src")
 set(SOURCE_FILES
     ${PATH}/pugixml.hpp
     ${PATH}/pugixml.cpp
 )
+set(SOURCE_FILES_TEST
+    ${PATH}/happly.h
+)
 
 add_executable( ${EXE_NAME} ${PATH}/main.cpp ${SOURCE_FILES} )
+add_executable( ${TEST_EXE_NAME} ${PATH}/test.cpp ${SOURCE_FILES_TEST})
 target_link_libraries( ${EXE_NAME} ${OpenCV_LIBS} )
 # add_custom_command(TARGET ${EXE_NAME}
 #                    COMMAND ${EXE_NAME}

@@ -8,8 +8,9 @@
 1. [Requirements](#requirements)
 2. [How to use](#how-to-use)
 3. [How it works](#how-it-works)
-4. [Drone tracking concept](#drone-tracking)
-5. [Results](#results)
+4. [Testing](#testing)
+5. [Drone tracking concept](#drone-tracking)
+6. [Results](#results)
 
 -----
 
@@ -103,6 +104,16 @@ Custom `compute` function is implemented, it calculates error and jacobian matri
 Jacobian matrix is calculated using estimated partial derivatives so some kind of threshold is required. If triangulation doesn't work try playing with this threshold (It is defined as macro on top of `PointTriangulator.h` file). 
 
 After calculating 3D point for each frame, vector of those points is returned.
+
+### Testing <a name="testing"></a>
+
+To test the algorithm a CSV file for true drone 3D positions is required.
+
+```bash
+./test output.ply labels.csv
+```
+
+We run testing program with output PLY file and CSV file that contains labels. The program will print out quadratic and normal error. This error is in the same unit as camera's positions. For example is we pass cameras positions in `cm` these errors will also be in `cm`.
 
 ### Drone Tracking Concept <a name="drone-tracking"></a>
 

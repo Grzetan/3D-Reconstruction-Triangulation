@@ -24,6 +24,7 @@ CTestTestfile.cmake
 _deps
 
 main
+test
 
 *.avi.csv
 *.avi
