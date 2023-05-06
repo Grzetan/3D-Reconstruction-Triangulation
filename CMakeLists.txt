@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project( 3D-Drone-Reconstruction )
+set(CMAKE_CXX_STANDARD 17)
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 set(EXE_NAME main)
@@ -7,6 +8,8 @@ set(PATH "./src")
 set(SOURCE_FILES
     ${PATH}/pugixml.hpp
     ${PATH}/pugixml.cpp
+    ${PATH}/HasiecTriangulator.h
+    ${PATH}/HasiecTriangulator.cpp
 )
 
 add_executable( ${EXE_NAME} ${PATH}/main.cpp ${SOURCE_FILES} )

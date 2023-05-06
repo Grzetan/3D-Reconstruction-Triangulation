@@ -5,7 +5,7 @@
 #include "PointTriangulator.h"
 #include "Camera.h"
 #include "pugixml.hpp"
-
+#include "HasiecTriangulator.h"
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
 const tdr::Camera* createCamera(int id, size_t width, size_t height, double focalLength, cv::Mat translation, cv::Mat rotation){
@@ -150,11 +150,13 @@ int main(int argc, const char** argv){
     // First dim = n_camera, second_dim = n_points
     std::vector<std::vector<cv::Point2d>> dronePoints;
     load2DPoints(argv[2], dronePoints);
-
-    PointTriangulator projector(cameras);
-
-    std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
+    HasiecTriangulator projector2(cameras);
+   // PointTriangulator projector(cameras);
+    std::vector<cv::Point3d> triangulatedPoints2 = projector2.triangulatePoints(dronePoints);
+   // std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
     
     const char* path = (argc == 4) ? argv[3] : "output.ply";
-    writeOutputFile(path, triangulatedPoints);
+    writeOutputFile(path, triangulatedPoints2);
+    std::string pathPrefix = "hasiec_";
+    writeOutputFile(pathPrefix.append(path).c_str(), triangulatedPoints2);
 }

@@ -122,7 +122,7 @@ namespace tdr
 		 *	tquat, campos must be set earlier
 		 */
 		void createExtricsicMat() {
-			cv::Mat rotation_matrix = toRotMatrix(rquat);
+			cv::Mat rotation_matrix = toRotMatrix(rquat).inv();
 
 			cv::Mat extrinsicMatrix(3, 4, CV_64F);
 			extrinsicMatrix.at<double>(0, 0) = rotation_matrix.at<double>(0, 0);
@@ -156,9 +156,7 @@ namespace tdr
 		 */
 		void compCamPos()
 		{
-			cv::Rodrigues(rvec, rmat); 
-
-			cv::Mat R = rmat.t(); 
+			cv::Mat R = toRotMatrix(rquat).inv();
 			camPos = -R * tvec; 
 		}
 
