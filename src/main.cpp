@@ -156,7 +156,6 @@ int main(int argc, const char** argv){
    // std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
     
     const char* path = (argc == 4) ? argv[3] : "output.ply";
-    writeOutputFile(path, triangulatedPoints2);
     std::string pathPrefix = "hasiec_";
     writeOutputFile(pathPrefix.append(path).c_str(), triangulatedPoints2);
 }

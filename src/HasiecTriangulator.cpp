@@ -18,8 +18,6 @@ cv::Point3d HasiecTriangulator::triangulatePoint(vector<CamPointPair> images)
     for (int n_cam_iterator = 0; n_cam_iterator < images.size(); n_cam_iterator++) {
         if ((images[n_cam_iterator].point.x == -1 || images[n_cam_iterator].point.y == -1)) continue;
 
-
-        std::cout << std::endl << " ";
         cooficients.at<double>(0 + n_cam_iterator * 2, 0) = images[n_cam_iterator].projectionMatrix.at<double>(0, 0) - images[n_cam_iterator].point.x * images[n_cam_iterator].projectionMatrix.at<double>(2, 0);
         cooficients.at<double>(0 + n_cam_iterator * 2, 1) = images[n_cam_iterator].projectionMatrix.at<double>(0, 1) - images[n_cam_iterator].point.x * images[n_cam_iterator].projectionMatrix.at<double>(2, 1);
         cooficients.at<double>(0 + n_cam_iterator * 2, 2) = images[n_cam_iterator].projectionMatrix.at<double>(0, 2) - images[n_cam_iterator].point.x * images[n_cam_iterator].projectionMatrix.at<double>(2, 2);
