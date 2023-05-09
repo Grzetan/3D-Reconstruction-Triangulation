@@ -40,7 +40,29 @@ std::vector<cv::Point3d> cross3d(std::vector<cv::Point3d> four_points, std::vect
 		
 		cv::Point3d cross_point = four_points[0] + delta_collinear * t;
 		return std::vector<cv::Point3d> { four_points[0], four_points[arms_order[0]], four_points[arms_order[1]], four_points[arms_order[2]], cross_point };
+}
 
+/** Funkcja oblicza globalne współrzędne punku podanego we współrzenych drona
+* @param[in] cross wektor 5 punktów ramion krzyża w postaci [1. punkt ramienia x,2. punkt ramienia x, 1. punkt ramienia y, 2. punkt ramienia y, punkt przecięcia]
+* @param[in] punkt w lokalnym układnie współrzędnych związanych z ramionami x i y
+* @return punkt w globalnym układnie współrzędnych
+*/
+cv::Point3d convert2global(std::vector<cv::Point3d> cross, cv::Point3d localPoint)
+{
+	cv::Point3d versorX = cross[1] - cross[0];//obliczam wektor kierunkowy osi x
+	versorX = versorX / sqrt(versorX.dot(versorX)); // normalizacja 
+	cv::Point3d versorY = cross[3] - cross[2];//obliczam wektor kierunkowy osi y
+	versorY = versorY / sqrt(versorY.dot(versorY));// normalizacja 
+
+	cv::Point3d versorZ = versorX.cross(versorY);//obliczam wersor kierunkowy osi z jako ilczyn wektorowy wersorów x i y - będzie porostopadły
+	//versorZ = versorZ / sqrt(versorZ.dot(versorZ)); 
+
+	cv::Point3d globalPoint;
+	
+	//nowe współrzędne to współrzędne środka lokalnego układu plus lokalne współrzędne punktów przemnożone razy wersory osi lokalnego układu widziane w globalnym układzie
+	globalPoint = (cross[4] + localPoint.x * versorX + localPoint.y * versorY + localPoint.z * versorZ);
+
+	return globalPoint;
 }
 
 void readInputCSV(const char* dir, Path& path, int offset = 2, int frequency = 4){
@@ -68,12 +90,13 @@ void readInputCSV(const char* dir, Path& path, int offset = 2, int frequency = 4
         }
 
         std::vector<cv::Point3d> cross = cross3d(markerPos);
-
         if(cross.size() != 5) continue;
 
-        point[0] = cross[4].x;
-        point[1] = cross[4].y;
-        point[2] = cross[4].z;
+        cv::Point3d center = convert2global(cross, {50, 0, -20});
+
+        point[0] = center.x;
+        point[1] = center.y;
+        point[2] = center.z;
         path.push_back(point);
     }
 }
