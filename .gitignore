@@ -151,3 +151,20 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.vs/VSWorkspaceState.json
+*.sqlite
+.vs/launch.vs.json
+.vs/Mocap/config/applicationhost.config
+.vs/Mocap/FileContentIndex/581e9b71-86d6-4083-9869-4fd3f7507ce7.vsidx
+.vs/cmake.db
+.vs/Mocap/v17/ipch/AutoPCH/ac763f65b0eda33f/MAIN.ipch
+.vs/Mocap/v17/ipch/AutoPCH/e1b72c3a48130e53/HASIECTRIANGULATOR.ipch
+.vs/Mocap/v17/Browse.VC.db
+.vs/Mocap/v17/.wsuo
+.vs/Mocap/FileContentIndex/read.lock
+.vs/Mocap/FileContentIndex/decadd05-9e06-4241-a09a-e048e8c7b166.vsidx
+.vs/Mocap/FileContentIndex/94c28961-7832-4b43-a725-de9648dd5096.vsidx
+.vs/Mocap/FileContentIndex/7b860e47-3b33-48b2-ba17-ca5479c04014.vsidx
+CMakeSettings.json
+.vs/ProjectSettings.json
+.vs/CMake Overview
