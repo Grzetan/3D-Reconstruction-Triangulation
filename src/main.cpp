@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <filesystem>
 #include <fstream>
+#include <chrono>
 #include "PointTriangulator.h"
 #include "Camera.h"
 #include "pugixml.hpp"
@@ -150,12 +151,18 @@ int main(int argc, const char** argv){
     // First dim = n_camera, second_dim = n_points
     std::vector<std::vector<cv::Point2d>> dronePoints;
     load2DPoints(argv[2], dronePoints);
-    HasiecTriangulator projector2(cameras);
-   // PointTriangulator projector(cameras);
-    std::vector<cv::Point3d> triangulatedPoints2 = projector2.triangulatePoints(dronePoints);
-   // std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    // HasiecTriangulator projector(cameras);
+    // std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
+
+    PointTriangulator projector(cameras);
+    std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
+    auto stop = std::chrono::high_resolution_clock::now();
     
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
+
     const char* path = (argc == 4) ? argv[3] : "output.ply";
-    std::string pathPrefix = "hasiec_";
-    writeOutputFile(pathPrefix.append(path).c_str(), triangulatedPoints2);
+    writeOutputFile(path, triangulatedPoints);
 }
