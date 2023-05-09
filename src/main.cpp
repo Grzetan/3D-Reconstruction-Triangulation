@@ -119,7 +119,7 @@ void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangula
     out << "end_header\n";
 
     double camSize = 0.5;
-    double scale = 0.01;
+    double scale = 1; //0.01;
 
     // Visualize cameras
     for(const auto& cam : cameras){
