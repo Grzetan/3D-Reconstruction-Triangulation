@@ -4,9 +4,10 @@
 #include <fstream>
 #include <chrono>
 #include "PointTriangulator.h"
+#include "HasiecTriangulator.h"
 #include "Camera.h"
 #include "pugixml.hpp"
-#include "HasiecTriangulator.h"
+
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
 const tdr::Camera* createCamera(int id, size_t width, size_t height, double focalLength, cv::Mat translation, cv::Mat rotation){

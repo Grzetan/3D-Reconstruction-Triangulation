@@ -25,6 +25,7 @@ _deps
 
 main
 test
+*.c3d
 
 *.avi.csv
 *.avi

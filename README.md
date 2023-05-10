@@ -52,13 +52,13 @@ cmake . & make
 This will create output binary file `main`, run it by:
 
 ```bash
-./main cameras.xml ./referenceBB
+./main ./data_one_drone/cameras.xml ./data_one_drone/referenceBB
 ```
 
 or
 
 ```bash
-./main cameras.xml ./referenceBB customName.ply
+./main ./data_one_drone/cameras.xml ./data_one_drone/referenceBB customName.ply
 ```
 
 ### How it works <a name="how-it-works"></a>
@@ -110,7 +110,7 @@ After calculating 3D point for each frame, vector of those points is returned.
 To test the algorithm a CSV file for true drone 3D positions is required.
 
 ```bash
-./test output.ply labels.csv
+./test output.ply ./data_one_drone/labels.csv
 ```
 
 We run testing program with output PLY file and CSV file that contains labels. The program will print out quadratic and normal error. This error is in the same unit as camera's positions. For example is we pass cameras positions in `cm` these errors will also be in `cm`.
