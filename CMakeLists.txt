@@ -11,6 +11,8 @@ set(SOURCE_FILES
     ${PATH}/pugixml.cpp
     ${PATH}/HasiecTriangulator.h
     ${PATH}/HasiecTriangulator.cpp
+    ${PATH}/utils.h
+    ${PATH}/utils.cpp
 )
 set(SOURCE_FILES_TEST
     ${PATH}/happly.h
