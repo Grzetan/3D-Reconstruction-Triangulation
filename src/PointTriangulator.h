@@ -178,4 +178,17 @@ public:
 
         return result;
 	}
+
+    // First dim = n_drones, second dim = n_cameras, third dim = n_frames
+    std::vector<std::vector<cv::Point3d>> triangulateDrones(std::vector<std::vector<std::vector<cv::Point2d>>> points){
+        std::vector<std::vector<cv::Point3d>> paths;
+        for(const auto& drone : points){
+            paths.push_back(triangulatePoints(drone));
+        }
+        return paths;
+    }
+
+    void classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<std::vector<cv::Point2d>>>& classifiedPoints){
+
+    }
 };

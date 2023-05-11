@@ -10,6 +10,8 @@ int main(int argc, const char** argv){
 
     std::vector<const tdr::Camera*> cameras = loadCamerasXML(argv[1]);
 
+    PointTriangulator triangulator(cameras);
+
     // First dim = n_camera, second_dim = n_frames
     // std::vector<std::vector<cv::Point2d>> dronePoints;
     // loadPointsOneDrone(argv[2], dronePoints);
@@ -18,14 +20,16 @@ int main(int argc, const char** argv){
     std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
     loadPointsMultipleDrones(argv[2], dronePoints);
 
-    std::cout << dronePoints[2][0][0] << ", " << dronePoints[2][0][1] << std::endl;
+    // First dim = n_drones, second dim = n_cameras, third_dim = n_frames
+    std::vector<std::vector<std::vector<cv::Point2d>>> classifiedDronePoints;
+    triangulator.classifyDrones(dronePoints, classifiedDronePoints);
 
     // auto start = std::chrono::high_resolution_clock::now();
-    // // HasiecTriangulator projector(cameras);
-    // // std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
+    // // HasiecTriangulator triangulator(cameras);
+    // // std::vector<cv::Point3d> triangulatedPoints = triangulator.triangulatePoints(dronePoints);
 
-    // PointTriangulator projector(cameras);
-    // std::vector<cv::Point3d> triangulatedPoints = projector.triangulatePoints(dronePoints);
+    // PointTriangulator triangulator(cameras);
+    // std::vector<cv::Point3d> triangulatedPoints = triangulator.triangulatePoints(dronePoints);
     // auto stop = std::chrono::high_resolution_clock::now();
     
     // auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
