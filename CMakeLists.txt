@@ -11,6 +11,7 @@ set(SOURCE_FILES
     ${PATH}/pugixml.cpp
     ${PATH}/HasiecTriangulator.h
     ${PATH}/HasiecTriangulator.cpp
+    ${PATH}/PointTriangulator.h
     ${PATH}/utils.h
     ${PATH}/utils.cpp
 )

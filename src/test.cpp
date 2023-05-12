@@ -3,7 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include "happly.h"
 
-typedef std::vector<std::array<double, 3>> Path;
+typedef std::vector<cv::Point3d> Path;
 
 /** Funkcja oblicza punkt przecięcia dla ramion krzyża w 3d z uwzględnieniem, że jeden z 4 punktów może nie być współpaszczyznowy z pozostałymi  trzema
 * @param[in] four_points wektor 4 punktów ramion krzyża w postaci niekoniecznie uporządkowanej
@@ -28,7 +28,6 @@ std::vector<cv::Point3d> cross3d(std::vector<cv::Point3d> four_points, std::vect
 		}
 		
 		if (arms_order.empty()){
-            std::cout << "HALO";
 			return std::vector<cv::Point3d>{};
         }
 
@@ -68,7 +67,6 @@ cv::Point3d convert2global(std::vector<cv::Point3d> cross, cv::Point3d localPoin
 void readInputCSV(const char* dir, Path& path, int offset = 2, int frequency = 4){
     std::ifstream file(dir);
     std::string line, token;
-    std::array<double, 3> point;
     int i=0;
     
     while (std::getline(file, line)){
@@ -93,11 +91,7 @@ void readInputCSV(const char* dir, Path& path, int offset = 2, int frequency = 4
         if(cross.size() != 5) continue;
 
         cv::Point3d center = convert2global(cross, {50, 0, -20});
-
-        point[0] = center.x;
-        point[1] = center.y;
-        point[2] = center.z;
-        path.push_back(point);
+        path.push_back(center);
     }
 }
 
@@ -107,9 +101,9 @@ double calculateError(Path& labelPath, Path& predPath){
 
     for(int i=0; i<size; i++){
         double err = std::sqrt(
-            std::pow(predPath[i][0] - labelPath[i][0], 2) +
-            std::pow(predPath[i][1] - labelPath[i][1], 2) +
-            std::pow(predPath[i][2] - labelPath[i][2], 2)
+            std::pow(predPath[i].x - labelPath[i].x, 2) +
+            std::pow(predPath[i].y - labelPath[i].y, 2) +
+            std::pow(predPath[i].z - labelPath[i].z, 2)
         );
         // std::cout << err << std::endl;
         sumError += err;
@@ -118,14 +112,42 @@ double calculateError(Path& labelPath, Path& predPath){
     return sumError / (double) size;
 }
 
+void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangulatedPoints){
+    std::ofstream out(path);
+    out << "ply\n";
+    out << "format ascii 1.0\n";
+    out << "element vertex " << triangulatedPoints.size() << "\n";
+    out << "property float x\n";
+    out << "property float y\n";
+    out << "property float z\n";
+    out << "element face 0\n";
+    out << "property list uchar int vertex_index\n";
+    out << "end_header\n";
+
+    double camSize = 0.5;
+    double scale = 0.01; //0.01;
+
+    // Visualize paths
+    for(const auto& p : triangulatedPoints){
+        out << p.x * scale << " " << p.y * scale << " " << p.z * scale << "\n";
+    }
+}
+
 int main(int argc, const char** argv){
     if(argc != 3) throw std::runtime_error("Input paths must be provided");
 
     happly::PLYData inputPLY(argv[1]);
-    Path predPath = inputPLY.getVertexPositions();
+    auto predPathHapply = inputPLY.getVertexPositions();
+    Path predPath;
+    for(const auto& p : predPathHapply){
+        predPath.push_back({p[0], p[1], p[2]});
+    }
+
     Path labelPath;
     readInputCSV(argv[2], labelPath);
 
     double error = calculateError(labelPath, predPath);
     std::cout << error << std::endl;
+
+    writeOutputFile("label.ply", labelPath);
 }
