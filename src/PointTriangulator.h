@@ -7,6 +7,7 @@
 # define THRESHOLD 1e-4 //5e-13 for squared
 # define MAX_ITERATIONS 1000
 # define SQUARED false
+# define MAX_ERROR 70 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
 
 class PointTriangulator {
     struct Ray {
@@ -16,13 +17,26 @@ class PointTriangulator {
 
     struct Combination{
         std::vector<size_t> combination_;
+        cv::Point3d point;
         double error;
 
         bool operator<(const Combination &c) const{
+            int count1 = std::count(combination_.begin(), combination_.end(), 0);
+            int count2 = std::count(c.combination_.begin(), c.combination_.end(), 0);
+            if(count1 != count2){
+                return count1 > count2;
+            }
+
             return error > c.error;
         }
 
         bool operator>(const Combination &c) const{
+            int count1 = std::count(combination_.begin(), combination_.end(), 0);
+            int count2 = std::count(c.combination_.begin(), c.combination_.end(), 0);
+            if(count1 != count2){
+                return count1 < count2;
+            }
+            
             return error < c.error;
         }
 
@@ -235,19 +249,18 @@ public:
         return paths;
     }
 
-    void classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<std::vector<cv::Point2d>>>& classifiedPoints, int n_drones){
-        for(int frame=1990; frame<1991; frame++){ // frame<points[0].size()
+    void triangulateMultipleDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones){
+        // Add new vector for every drone
+        for(int i=0; i<n_drones; i++){
+            triangulatedPoints.push_back({});
+        }
+        
+        for(int frame=0; frame<points[0].size(); frame++){
             std::vector<size_t> combination(points.size());
             std::vector<size_t> n_detections(points.size());
             for(int i=0; i<points.size(); i++){
                 n_detections[i] = points[i][frame].size() + 1; // Plus one for no detection
             }
-
-            std::cout << frame << " number of bboxes on cameras: ";
-            for(const auto& n : n_detections){
-                std::cout << n << ", ";
-            }
-            std::cout << std::endl;
 
             std::priority_queue<Combination> combinationsQueue;
 
@@ -256,7 +269,7 @@ public:
                 int count = std::count_if(combination.begin(), combination.end(), [&](size_t &i) {
                     return i > 0;
                 });
-                if(count < 4) continue;
+                if(count < 2) continue;
 
                 // Create rays for every bounding box in this combination
                 std::vector<Ray> rays;
@@ -266,38 +279,37 @@ public:
                 }
 
                 std::pair<cv::Point3d, double> pointWithError = triangulatePoint(rays);
-                combinationsQueue.push({combination, pointWithError.second});
+                combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
             }while(increment(combination, n_detections));
 
-            std::cout << frame << " count of valid combinations: " << combinationsQueue.size() << std::endl;
-
-            int i=0;
-            while (!combinationsQueue.empty() ) {
-                std::cout << frame << ": index od combination: " << i << ": " << combinationsQueue.top().error << ": ";
-                for(const auto& a : combinationsQueue.top().combination_){
-                    std::cout << a << ", ";
-                }
-                std::cout << std::endl;
+            // Pick n_drones best combinations
+            std::vector<Combination> finalCombinations;
+            while(!combinationsQueue.empty() && finalCombinations.size() < n_drones){
+                Combination c = combinationsQueue.top();
+                if(c.isCombinationUnique(finalCombinations) && c.error < MAX_ERROR) finalCombinations.push_back(c);
                 combinationsQueue.pop();
-                i++;
             }
 
-            // std::vector<Combination> finalCombinations;
-            // while(!combinationsQueue.empty() && finalCombinations.size() < n_drones){
-            //     Combination c = combinationsQueue.top();
-            //     if(c.isCombinationUnique(finalCombinations)) finalCombinations.push_back(c);
-            //     combinationsQueue.pop();
-            // }
-
-            // if(finalCombinations.size() < n_drones) throw std::runtime_error("Not enough drones are classified");
-
-            // for(const auto& c : finalCombinations){
-            //     std::cout << c.error << ": ";
-            //     for(const auto& elem : c.combination_){
-            //         std::cout << elem << ", ";
-            //     }
-            //     std::cout << std::endl;
-            // }
+            // Pick best drone path for each new point
+            if(frame == 0){
+                for(int i=0; i<finalCombinations.size(); i++){
+                    triangulatedPoints[i].push_back(finalCombinations[i].point);
+                }
+            }else{
+                // Classify every new point to path
+                for(int i=0; i<finalCombinations.size(); i++){
+                    size_t bestPath = 0;
+                    double bestDist = 1e+6;
+                    for(int j=0; j<n_drones; j++){
+                        double dist = cv::norm(triangulatedPoints[j].back() - finalCombinations[i].point);
+                        if(dist < bestDist){
+                            bestDist = dist;
+                            bestPath = j;
+                        }
+                    }
+                    triangulatedPoints[bestPath].push_back(finalCombinations[i].point);
+                }
+            }
         }
     }
 };
