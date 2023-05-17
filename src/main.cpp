@@ -22,7 +22,7 @@ int main(int argc, const char** argv){
 
     // // First dim = n_drones, second dim = n_cameras, third_dim = n_frames
     std::vector<std::vector<std::vector<cv::Point2d>>> classifiedDronePoints;
-    triangulator.classifyDrones(dronePoints, classifiedDronePoints);
+    triangulator.classifyDrones(dronePoints, classifiedDronePoints, 2);
 
     // auto start = std::chrono::high_resolution_clock::now();
     // // HasiecTriangulator triangulator(cameras);

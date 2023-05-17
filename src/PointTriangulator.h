@@ -1,10 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <queue>
 #include "Camera.h"
 
 # define PI 3.14159265358979323846
 # define THRESHOLD 5e-13
+# define MAX_ITERATIONS 1000
 
 class PointTriangulator {
     struct Ray {
@@ -13,9 +15,16 @@ class PointTriangulator {
     };
 
     struct Combination{
-        std::vector<int> cameras;
-        std::vector<int> pointIDsOnCameras;
+        std::vector<size_t> combination;
         double error;
+
+        bool operator<(const Combination &c) const{
+            return error < c.error;
+        }
+
+        bool operator>(const Combination &c) const{
+            return error > c.error;
+        }
     };
 
     class RayClosestPoint : public cv::LMSolver::Callback {
@@ -29,11 +38,16 @@ class PointTriangulator {
             const double z = paramMat.at<double>(0, 2);
             const cv::Vec3d currentPoint(x, y, z);
 
+            double summedError = 0;
+
             err.create(static_cast<int>(rays_.size()), 1, CV_64FC1);
             cv::Mat errMat = err.getMat();
             errMat.forEach<double>([&](double& e, const int* position) {
                 e = distToRay(rays_[position[0]], currentPoint);
+                summedError += e;
             });
+
+            error = summedError / (double) rays_.size();
 
             if (J.needed())
             {
@@ -51,9 +65,14 @@ class PointTriangulator {
             return true;
         }
 
+        double getError(){
+            return error;
+        }
+
     private:
         std::vector<Ray> rays_;
         const double epsilon_;
+        mutable double error;
 
         static double distToRay(const Ray& r, const cv::Vec3d& p, bool squared=true){
             cv::Point3d result = r.dir.cross(p - cv::Vec3d(r.origin));
@@ -68,7 +87,7 @@ class PointTriangulator {
 
 	std::vector<const tdr::Camera*> cameras;
 
-    cv::Point3d triangulatePoint(std::vector<Ray>& rays) {
+    std::pair<cv::Point3d, double> triangulatePoint(std::vector<Ray>& rays) {
         cv::Point3d initGuess;
 
         for (const auto& ray : rays) {
@@ -79,11 +98,12 @@ class PointTriangulator {
         initGuess.y /= rays.size();
         initGuess.z /= rays.size();
 
-        cv::Ptr<cv::LMSolver> solver = cv::LMSolver::create(cv::Ptr<RayClosestPoint>(new RayClosestPoint(rays)), 1000);
+        cv::Ptr solverCompare = cv::Ptr<RayClosestPoint>(new RayClosestPoint(rays));
+        cv::Ptr<cv::LMSolver> solver = cv::LMSolver::create(solverCompare, MAX_ITERATIONS);
         std::vector<double> params = { initGuess.x, initGuess.y, initGuess.z };
         int r = solver->run(params);
 
-        return { params[0], params[1], params[2] };
+        return { {params[0], params[1], params[2]}, solverCompare->getError() };
     }
 
     // Not sure if it works
@@ -189,7 +209,8 @@ public:
                 throw std::runtime_error("Too few rays are found");
             }
 
-            result.push_back(triangulatePoint(rays));
+            std::pair<cv::Point3d, double> pointWithError = triangulatePoint(rays);
+            result.push_back(pointWithError.first);
         }
 
         return result;
@@ -204,7 +225,7 @@ public:
         return paths;
     }
 
-    void classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<std::vector<cv::Point2d>>>& classifiedPoints){
+    void classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<std::vector<cv::Point2d>>>& classifiedPoints, int n_drones){
         for(int frame=0; frame<55; frame++){ // frame<points[0].size()
             std::vector<size_t> combination(points.size());
             std::vector<size_t> n_detections(points.size());
@@ -212,17 +233,24 @@ public:
                 n_detections[i] = points[i][frame].size() + 1; // Plus one for no detection
             }
 
-            std::cout << frame << ": ";
-            for(const auto& g : n_detections){
-                std::cout << g << ", ";
-            }
-            std::cout << std::endl;
+            std::priority_queue<Combination> combinationsQueue;
 
             do{
-                for(const auto& c : combination){
-                    std::cout << c << ", ";
+                // Skip combination if number of cameras is not enough
+                int count = std::count_if(combination.begin(), combination.end(), [&](size_t &i) {
+                    return i > 0;
+                });
+                if(count < 2) continue;
+
+                // Create rays for every bounding box in this combination
+                std::vector<Ray> rays;
+                for(int i=0; i<combination.size(); i++){
+                    if(combination[i] == 0) continue; // First index means no detection so we can skip it
+                    rays.push_back(createRayForPoint(cameras[i], points[i][frame][combination[i]-1]));
                 }
-                std::cout << std::endl;
+
+                std::pair<cv::Point3d, double> pointWithError = triangulatePoint(rays);
+                combinationsQueue.push({combination, pointWithError.second});
             }while(increment(combination, n_detections));
         }
     }
