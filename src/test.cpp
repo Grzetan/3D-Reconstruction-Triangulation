@@ -149,5 +149,6 @@ int main(int argc, const char** argv){
     double error = calculateError(labelPath, predPath);
     std::cout << error << std::endl;
 
-    writeOutputFile("label.ply", labelPath);
+    // Use this to save label points to PLY file
+    // writeOutputFile("label.ply", labelPath);
 }

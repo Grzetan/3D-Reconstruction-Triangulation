@@ -4,9 +4,9 @@
 #include <queue>
 #include "Camera.h"
 
-# define PI 3.14159265358979323846
-# define THRESHOLD 5e-13
+# define THRESHOLD 1e-4 //5e-13 for squared
 # define MAX_ITERATIONS 1000
+# define SQUARED false
 
 class PointTriangulator {
     struct Ray {
@@ -15,21 +15,30 @@ class PointTriangulator {
     };
 
     struct Combination{
-        std::vector<size_t> combination;
+        std::vector<size_t> combination_;
         double error;
 
         bool operator<(const Combination &c) const{
-            return error < c.error;
+            return error > c.error;
         }
 
         bool operator>(const Combination &c) const{
-            return error > c.error;
+            return error < c.error;
+        }
+
+        bool isCombinationUnique(std::vector<Combination>& combinations){
+            for(const auto& comb : combinations){
+                for(int i=0; i<combination_.size(); i++){
+                    if(combination_[i] == comb.combination_[i] && combination_[i] != 0) return false;
+                }
+            }
+            return true;
         }
     };
 
     class RayClosestPoint : public cv::LMSolver::Callback {
     public:
-        explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=THRESHOLD) : rays_(rays), epsilon_(epsilon) {}
+        explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=THRESHOLD, const bool squared=SQUARED) : rays_(rays), epsilon_(epsilon), squared_(squared) {}
 
         bool compute(cv::InputArray params, cv::OutputArray err, cv::OutputArray J) const override {
             cv::Mat paramMat = params.getMat().reshape(1, 1);
@@ -56,9 +65,9 @@ class PointTriangulator {
                 for(int row = 0 ; row<Jmat.rows ; ++row){
                     double* pJ = Jmat.ptr<double>(row);
 
-                    *pJ++ = (distToRay_(rays_[row], {x+epsilon_, y, z}) - distToRay_(rays_[row], {x-epsilon_, y, z})) / (2*epsilon_);
-                    *pJ++ = (distToRay_(rays_[row], {x, y+epsilon_, z}) - distToRay_(rays_[row], {x, y-epsilon_, z})) / (2*epsilon_);
-                    *pJ++ = (distToRay_(rays_[row], {x, y, z+epsilon_}) - distToRay_(rays_[row], {x, y, z-epsilon_})) / (2*epsilon_);
+                    *pJ++ = (distToRay_(rays_[row], {x+epsilon_, y, z}, squared_) - distToRay_(rays_[row], {x-epsilon_, y, z}, squared_)) / (2*epsilon_);
+                    *pJ++ = (distToRay_(rays_[row], {x, y+epsilon_, z}, squared_) - distToRay_(rays_[row], {x, y-epsilon_, z}, squared_)) / (2*epsilon_);
+                    *pJ++ = (distToRay_(rays_[row], {x, y, z+epsilon_}, squared_) - distToRay_(rays_[row], {x, y, z-epsilon_}, squared_)) / (2*epsilon_);
                 }
             }
 
@@ -72,15 +81,16 @@ class PointTriangulator {
     private:
         std::vector<Ray> rays_;
         const double epsilon_;
+        const bool squared_;
         mutable double error;
 
-        static double distToRay(const Ray& r, const cv::Vec3d& p, bool squared=true){
+        static double distToRay(const Ray& r, const cv::Vec3d& p, bool squared=false){
             cv::Point3d result = r.dir.cross(p - cv::Vec3d(r.origin));
             if(squared) return result.x*result.x + result.y*result.y + result.z*result.z;
             return std::sqrt(result.x*result.x + result.y*result.y + result.z*result.z);
         }
 
-        static double distToRay_(const Ray& r, const cv::Vec3d p, bool squared=true){
+        static double distToRay_(const Ray& r, const cv::Vec3d p, bool squared=false){
             return distToRay(r, p, squared);
         }
     };
@@ -226,12 +236,18 @@ public:
     }
 
     void classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<std::vector<cv::Point2d>>>& classifiedPoints, int n_drones){
-        for(int frame=0; frame<55; frame++){ // frame<points[0].size()
+        for(int frame=1990; frame<1991; frame++){ // frame<points[0].size()
             std::vector<size_t> combination(points.size());
             std::vector<size_t> n_detections(points.size());
             for(int i=0; i<points.size(); i++){
                 n_detections[i] = points[i][frame].size() + 1; // Plus one for no detection
             }
+
+            std::cout << frame << " number of bboxes on cameras: ";
+            for(const auto& n : n_detections){
+                std::cout << n << ", ";
+            }
+            std::cout << std::endl;
 
             std::priority_queue<Combination> combinationsQueue;
 
@@ -240,7 +256,7 @@ public:
                 int count = std::count_if(combination.begin(), combination.end(), [&](size_t &i) {
                     return i > 0;
                 });
-                if(count < 2) continue;
+                if(count < 4) continue;
 
                 // Create rays for every bounding box in this combination
                 std::vector<Ray> rays;
@@ -252,6 +268,36 @@ public:
                 std::pair<cv::Point3d, double> pointWithError = triangulatePoint(rays);
                 combinationsQueue.push({combination, pointWithError.second});
             }while(increment(combination, n_detections));
+
+            std::cout << frame << " count of valid combinations: " << combinationsQueue.size() << std::endl;
+
+            int i=0;
+            while (!combinationsQueue.empty() ) {
+                std::cout << frame << ": index od combination: " << i << ": " << combinationsQueue.top().error << ": ";
+                for(const auto& a : combinationsQueue.top().combination_){
+                    std::cout << a << ", ";
+                }
+                std::cout << std::endl;
+                combinationsQueue.pop();
+                i++;
+            }
+
+            // std::vector<Combination> finalCombinations;
+            // while(!combinationsQueue.empty() && finalCombinations.size() < n_drones){
+            //     Combination c = combinationsQueue.top();
+            //     if(c.isCombinationUnique(finalCombinations)) finalCombinations.push_back(c);
+            //     combinationsQueue.pop();
+            // }
+
+            // if(finalCombinations.size() < n_drones) throw std::runtime_error("Not enough drones are classified");
+
+            // for(const auto& c : finalCombinations){
+            //     std::cout << c.error << ": ";
+            //     for(const auto& elem : c.combination_){
+            //         std::cout << elem << ", ";
+            //     }
+            //     std::cout << std::endl;
+            // }
         }
     }
 };
