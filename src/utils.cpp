@@ -80,6 +80,11 @@ void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vec
             }
         }
     }
+
+    for(int i=1; i<points.size(); i++){
+        if(points[i-1].size() != points[i].size())
+            throw std::runtime_error("Number of frames on all cameras must be the same");
+    }
 }
 
 std::vector<const tdr::Camera*> loadCamerasXML(const char* path){

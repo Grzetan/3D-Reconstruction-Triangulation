@@ -6,60 +6,66 @@
 # define PI 3.14159265358979323846
 # define THRESHOLD 5e-13
 
-struct Ray {
-    cv::Point3d origin;
-    cv::Point3d dir;
-};
+class PointTriangulator {
+    struct Ray {
+        cv::Point3d origin;
+        cv::Point3d dir;
+    };
 
-class RayClosestPoint : public cv::LMSolver::Callback {
-public:
-    explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=THRESHOLD) : rays_(rays), epsilon_(epsilon) {}
+    struct Combination{
+        std::vector<int> cameras;
+        std::vector<int> pointIDsOnCameras;
+        double error;
+    };
 
-    bool compute(cv::InputArray params, cv::OutputArray err, cv::OutputArray J) const override {
-        cv::Mat paramMat = params.getMat().reshape(1, 1);
-        const double x = paramMat.at<double>(0, 0);
-        const double y = paramMat.at<double>(0, 1);
-        const double z = paramMat.at<double>(0, 2);
-        const cv::Vec3d currentPoint(x, y, z);
+    class RayClosestPoint : public cv::LMSolver::Callback {
+    public:
+        explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=THRESHOLD) : rays_(rays), epsilon_(epsilon) {}
 
-        err.create(static_cast<int>(rays_.size()), 1, CV_64FC1);
-        cv::Mat errMat = err.getMat();
-        errMat.forEach<double>([&](double& e, const int* position) {
-            e = distToRay(rays_[position[0]], currentPoint);
-        });
+        bool compute(cv::InputArray params, cv::OutputArray err, cv::OutputArray J) const override {
+            cv::Mat paramMat = params.getMat().reshape(1, 1);
+            const double x = paramMat.at<double>(0, 0);
+            const double y = paramMat.at<double>(0, 1);
+            const double z = paramMat.at<double>(0, 2);
+            const cv::Vec3d currentPoint(x, y, z);
 
-        if (J.needed())
-        {
-            J.create(errMat.rows, paramMat.cols, CV_64FC1);
-            cv::Mat Jmat = J.getMat();
-            for(int row = 0 ; row<Jmat.rows ; ++row){
-                double* pJ = Jmat.ptr<double>(row);
+            err.create(static_cast<int>(rays_.size()), 1, CV_64FC1);
+            cv::Mat errMat = err.getMat();
+            errMat.forEach<double>([&](double& e, const int* position) {
+                e = distToRay(rays_[position[0]], currentPoint);
+            });
 
-                *pJ++ = (distToRay_(rays_[row], {x+epsilon_, y, z}) - distToRay_(rays_[row], {x-epsilon_, y, z})) / (2*epsilon_);
-                *pJ++ = (distToRay_(rays_[row], {x, y+epsilon_, z}) - distToRay_(rays_[row], {x, y-epsilon_, z})) / (2*epsilon_);
-                *pJ++ = (distToRay_(rays_[row], {x, y, z+epsilon_}) - distToRay_(rays_[row], {x, y, z-epsilon_})) / (2*epsilon_);
+            if (J.needed())
+            {
+                J.create(errMat.rows, paramMat.cols, CV_64FC1);
+                cv::Mat Jmat = J.getMat();
+                for(int row = 0 ; row<Jmat.rows ; ++row){
+                    double* pJ = Jmat.ptr<double>(row);
+
+                    *pJ++ = (distToRay_(rays_[row], {x+epsilon_, y, z}) - distToRay_(rays_[row], {x-epsilon_, y, z})) / (2*epsilon_);
+                    *pJ++ = (distToRay_(rays_[row], {x, y+epsilon_, z}) - distToRay_(rays_[row], {x, y-epsilon_, z})) / (2*epsilon_);
+                    *pJ++ = (distToRay_(rays_[row], {x, y, z+epsilon_}) - distToRay_(rays_[row], {x, y, z-epsilon_})) / (2*epsilon_);
+                }
             }
+
+            return true;
         }
 
-        return true;
-    }
+    private:
+        std::vector<Ray> rays_;
+        const double epsilon_;
 
-private:
-    std::vector<Ray> rays_;
-    const double epsilon_;
+        static double distToRay(const Ray& r, const cv::Vec3d& p, bool squared=true){
+            cv::Point3d result = r.dir.cross(p - cv::Vec3d(r.origin));
+            if(squared) return result.x*result.x + result.y*result.y + result.z*result.z;
+            return std::sqrt(result.x*result.x + result.y*result.y + result.z*result.z);
+        }
 
-    static double distToRay(const Ray& r, const cv::Vec3d& p, bool squared=true){
-        cv::Point3d result = r.dir.cross(p - cv::Vec3d(r.origin));
-        if(squared) return result.x*result.x + result.y*result.y + result.z*result.z;
-        return std::sqrt(result.x*result.x + result.y*result.y + result.z*result.z);
-    }
+        static double distToRay_(const Ray& r, const cv::Vec3d p, bool squared=true){
+            return distToRay(r, p, squared);
+        }
+    };
 
-    static double distToRay_(const Ray& r, const cv::Vec3d p, bool squared=true){
-        return distToRay(r, p, squared);
-    }
-};
-
-class PointTriangulator {
 	std::vector<const tdr::Camera*> cameras;
 
     cv::Point3d triangulatePoint(std::vector<Ray>& rays) {
@@ -106,7 +112,6 @@ class PointTriangulator {
 
     cv::Vec3d rotatePointByQuaternion(cv::Vec3d point, const cv::Mat quat)
     {
-
         cv::Vec4d quaternion(quat.at<double>(0,0), quat.at<double>(1,0), quat.at<double>(2,0), quat.at<double>(3,0));
         cv::Vec4d point_quaternion(0, point[0], point[1], point[2]);
         cv::Vec4d rotated_point_quaternion = quaternion * point_quaternion * quaternion.conj();
@@ -142,6 +147,17 @@ class PointTriangulator {
         return {origin, rotatePointByQuaternion(pixelDir, cam->rquat)};
     }
 
+    bool increment(std::vector<size_t>& combination, std::vector<size_t>& sizes){
+        for(int i=combination.size() - 1; i>=0; i--){
+            if (combination[i] < sizes[i] - 1) {
+                combination[i]++;
+                return true;
+            } else {
+                combination[i] = 0;
+            }
+        }
+        return false;
+    }
 
 public:
 	PointTriangulator(std::vector<const tdr::Camera*> cameras_) : cameras(cameras_) {};
@@ -189,6 +205,25 @@ public:
     }
 
     void classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<std::vector<cv::Point2d>>>& classifiedPoints){
+        for(int frame=0; frame<55; frame++){ // frame<points[0].size()
+            std::vector<size_t> combination(points.size());
+            std::vector<size_t> n_detections(points.size());
+            for(int i=0; i<points.size(); i++){
+                n_detections[i] = points[i][frame].size() + 1; // Plus one for no detection
+            }
 
+            std::cout << frame << ": ";
+            for(const auto& g : n_detections){
+                std::cout << g << ", ";
+            }
+            std::cout << std::endl;
+
+            do{
+                for(const auto& c : combination){
+                    std::cout << c << ", ";
+                }
+                std::cout << std::endl;
+            }while(increment(combination, n_detections));
+        }
     }
 };
