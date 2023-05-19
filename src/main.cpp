@@ -19,6 +19,8 @@ int main(int argc, const char** argv){
     // // First dim = n_cameras, second_dim = n_frames, third_dim = n_drones
     std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
     loadPointsMultipleDrones(argv[2], dronePoints);
+    
+    std::cout << dronePoints[0].size() << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
 

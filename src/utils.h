@@ -22,8 +22,9 @@ void loadPointsOneDrone(const char* path, std::vector<std::vector<cv::Point2d>>&
  * @param path Path to file
  * @param points Output argument, 3D Vector of points. First dim is for cameras, second is for number of frames and third dimention is for drones.
  * @param offset How many lines should we skip at the beggining.
+ * @param recordSize How many numbers each detection has
  */
-void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vector<cv::Point2d>>>& points, int offset = 0);
+void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vector<cv::Point2d>>>& points, int offset = 1, int recordSize = 7);
 
 std::vector<const tdr::Camera*> loadCamerasXML(const char* path);
 

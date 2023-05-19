@@ -256,6 +256,7 @@ public:
         }
         
         for(int frame=0; frame<points[0].size(); frame++){
+            std::cout << frame << std::endl;
             std::vector<size_t> combination(points.size());
             std::vector<size_t> n_detections(points.size());
             for(int i=0; i<points.size(); i++){
@@ -307,7 +308,8 @@ public:
                             bestPath = j;
                         }
                     }
-                    triangulatedPoints[bestPath].push_back(finalCombinations[i].point);
+                    if(bestDist < 200)
+                        triangulatedPoints[bestPath].push_back(finalCombinations[i].point);
                 }
             }
         }
