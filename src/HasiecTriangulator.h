@@ -1,34 +1,27 @@
-#pragma once
-#include <iostream>
 #include<opencv2/opencv.hpp>
 #include<vector>
 #include "Camera.h"
+#include "Triangulator.h"
 
 
-struct CamPointPair
+class MatrixMethodTriangulator : public Triangulator
 {
-	cv::Mat projectionMatrix;
-	cv::Point2d point;
-};
 
-class HasiecTriangulator
-{
+
+
 private:
-	std::vector<cv::Mat> projection_matrices;//< vector of projection matrices in mocap system
-
-
-	void construct(std::vector<cv::Mat> projection_matrices);
-
-	cv::Point3d triangulatePoint(vector<CamPointPair> images);
-
+	std::vector<const tdr::Camera*> cameras;
 public:
+
+	/*! \brief method to 3D reconstruction based on vector pairs - camera and point
+	*/
+	std::pair<cv::Point3d, double> triangulatePoint(vector<CamPointPair> images) override;
 	
 	/*! \brief constructor
 	*/
-	HasiecTriangulator(std::vector<const tdr::Camera*> cameras_);
+	MatrixMethodTriangulator(std::vector<const tdr::Camera*> cameras_);
 
 	/*! \brief method to 3D reconstruction based on vecotr of 2D positions
 	*/
-	std::vector<cv::Point3d> triangulatePoints(std::vector<std::vector<cv::Point2d>> points);
+	std::vector<cv::Point3d> triangulatePoints(std::vector<std::vector<cv::Point2d>> points) override;
 };
-

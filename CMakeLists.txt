@@ -14,6 +14,7 @@ set(SOURCE_FILES
     ${PATH}/PointTriangulator.h
     ${PATH}/utils.h
     ${PATH}/utils.cpp
+    ${PATH}/DronClassifier.cpp
 )
 set(SOURCE_FILES_TEST
     ${PATH}/happly.h

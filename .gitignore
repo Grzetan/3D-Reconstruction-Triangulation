@@ -169,3 +169,14 @@ dmypy.json
 CMakeSettings.json
 .vs/ProjectSettings.json
 .vs/CMake Overview
+.vs/3D-Reconstruction-Triangulation/v17/ipch/AutoPCH/947f37b1980a7b63/HASIECTRIANGULATOR.ipch
+.vs/3D-Reconstruction-Triangulation/config/applicationhost.config
+.vs/3D-Reconstruction-Triangulation/FileContentIndex/read.lock
+.vs/3D-Reconstruction-Triangulation/v17/.wsuo
+.vs/3D-Reconstruction-Triangulation/v17/Browse.VC.db
+.vs/3D-Reconstruction-Triangulation/v17/ipch/AutoPCH/85092ac049470155/UTILS.ipch
+*.ipch
+*.db-shm
+*.db-wal
+*.opendb
+*.lock
