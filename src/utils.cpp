@@ -40,7 +40,7 @@ void loadPointsOneDrone(const char* path, std::vector<std::vector<cv::Point2d>>&
     }
 }
 
-void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vector<cv::Point2d>>>& points, int offset){
+void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vector<cv::Point2d>>>& points, int offset, int recordSize){
     std::vector<std::string> files;
     for (const auto& dirEntry : recursive_directory_iterator(path)){
         std::string directory = dirEntry.path().u8string();
@@ -54,12 +54,12 @@ void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vec
     int frame, x1, y1, x2, y2;
 
     for(auto& f : files){
-        int i=0;
+        int n_line=0;
         std::ifstream file(f);
         points.push_back({}); // Add new vector for current camera
 
         while (std::getline(file, line)){
-            if(offset > i++) continue; // Skip first `offset` lines
+            if(offset > n_line++ || n_line > 2001) continue; // Skip first `offset` lines
             std::istringstream iss(line);
             std::vector<int> seperatedLine;
 
@@ -67,15 +67,15 @@ void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vec
                 seperatedLine.push_back(std::stoi(token));
             }
 
-            if((seperatedLine.size() - 1) % 6 != 0)
+            if((seperatedLine.size() - 1) % recordSize != 0)
                 throw std::runtime_error("Invalid CSV file!");
 
             points.back().push_back({}); // Add vector for new frame
 
             for(int j=0; j<seperatedLine.size() / 6; j++){
                 cv::Point2d point;
-                point.x = seperatedLine[j*6+5]; 
-                point.y = seperatedLine[j*6+6];
+                point.x = seperatedLine[j*recordSize+5]; 
+                point.y = seperatedLine[j*recordSize+6];
                 points.back().back().push_back(point);
             }
         }

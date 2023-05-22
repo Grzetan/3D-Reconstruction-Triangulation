@@ -27,6 +27,8 @@ main
 test
 *.c3d
 
+exp*
+
 *.avi.csv
 *.avi
 *.mp4
