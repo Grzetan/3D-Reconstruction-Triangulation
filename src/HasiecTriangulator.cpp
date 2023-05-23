@@ -37,7 +37,7 @@ std::pair<cv::Point3d, double> MatrixMethodTriangulator::triangulatePoint(vector
     cv::Mat errorT;
     cv::transpose(error, errorT);
     error = (errorT * error);
-    double err = error.at<double>(0);
+    double err = sqrt(error.at<double>(0)/( 2 * images.size()));
     return std::pair<cv::Point3d, double> {cv::Point3d(X.at<double>(0), X.at<double>(1), X.at<double>(2)),err};
 
 }
@@ -75,4 +75,9 @@ std::vector<cv::Point3d> MatrixMethodTriangulator::triangulatePoints(std::vector
     }
 
     return result;
+}
+
+const tdr::Camera* MatrixMethodTriangulator::getCamera(int camera)
+{
+     return cameras[camera];
 }

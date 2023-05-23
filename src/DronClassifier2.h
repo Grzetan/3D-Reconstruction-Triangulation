@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include<opencv2/opencv.hpp>
+#include "Triangulator.h"
 class DronClassifier2
 {
 	public:
@@ -8,6 +9,9 @@ class DronClassifier2
             std::vector<size_t> combination_;
             cv::Point3d point;
             double error;
+            std::vector<int> sizes;
+            int min_drones;
+            int drones;
 
             bool operator<(const Combination& c) const {
                 int count1 = std::count(combination_.begin(), combination_.end(), 0);
@@ -37,8 +41,12 @@ class DronClassifier2
                 }
                 return true;
             }
-            Combination& operator++();
-            //Combination operator++(int);
+            Combination(std::vector<size_t> combination_,cv::Point3d point,double error);
+            Combination(int min_drones, std::vector<int> sizes);
+            bool increment();
+
+            
 	    };
-	void triangulateMultipleDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones);
+
+    void triangulateMultipleDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones, Triangulator* triangulator);
 };

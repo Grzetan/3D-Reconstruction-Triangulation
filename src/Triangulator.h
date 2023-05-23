@@ -9,7 +9,6 @@ class Triangulator
 {
 
 private:
-	std::vector<cv::Mat> projection_matrices;//< vector of projection matrices in mocap system
 	std::vector<const tdr::Camera*> cameras;
 public:
 	struct CamPointPair
@@ -23,4 +22,5 @@ public:
 	/*! \brief method to 3D reconstruction based on vecotr of 2D positions
 	*/
 	virtual std::vector<cv::Point3d> triangulatePoints(std::vector<std::vector<cv::Point2d>> points) = 0;
+	virtual const tdr::Camera* getCamera(int camera) = 0;
 };

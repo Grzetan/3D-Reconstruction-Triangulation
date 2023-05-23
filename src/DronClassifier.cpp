@@ -1,6 +1,6 @@
 #include "DronClassifier.h"
 #include <queue>
-void DronClassifier::triangulateMultipleDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones)
+void DronClassifier2::triangulateMultipleDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones)
 {
 	std::priority_queue<Combination> combinationQueue();
 	//for
