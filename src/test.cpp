@@ -70,7 +70,7 @@ void readInputCSV(const char* dir, Path& path, int offset = 2, int frequency = 4
     int i=0;
     
     while (std::getline(file, line)){
-        if(offset > i++ || (i+offset-1)%frequency != 0) continue; // Skip first `offset` lines and skip redundant frequencies
+        if(offset > i++ || (i+offset-1)%frequency != 0 || i/frequency > 2000) continue; // Skip first `offset` lines and skip redundant frequencies
         std::istringstream iss(line);
         std::vector<double> seperatedLine;
 
@@ -90,7 +90,8 @@ void readInputCSV(const char* dir, Path& path, int offset = 2, int frequency = 4
         std::vector<cv::Point3d> cross = cross3d(markerPos);
         if(cross.size() != 5) continue;
 
-        cv::Point3d center = convert2global(cross, {50, 0, -20});
+        // cv::Point3d center = convert2global(cross, {50, 0, -20});
+        cv::Point3d center = convert2global(cross, {-180, 200, -450});
         path.push_back(center);
     }
 }
@@ -136,19 +137,19 @@ void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangula
 int main(int argc, const char** argv){
     if(argc != 3) throw std::runtime_error("Input paths must be provided");
 
-    happly::PLYData inputPLY(argv[1]);
-    auto predPathHapply = inputPLY.getVertexPositions();
-    Path predPath;
-    for(const auto& p : predPathHapply){
-        predPath.push_back({p[0], p[1], p[2]});
-    }
+    // happly::PLYData inputPLY(argv[1]);
+    // auto predPathHapply = inputPLY.getVertexPositions();
+    // Path predPath;
+    // for(const auto& p : predPathHapply){
+    //     predPath.push_back({p[0], p[1], p[2]});
+    // }
 
     Path labelPath;
     readInputCSV(argv[2], labelPath);
 
-    double error = calculateError(labelPath, predPath);
-    std::cout << error << std::endl;
+    // double error = calculateError(labelPath, predPath);
+    // std::cout << error << std::endl;
 
     // Use this to save label points to PLY file
-    // writeOutputFile("label.ply", labelPath);
+    writeOutputFile("Dron1_label.ply", labelPath);
 }

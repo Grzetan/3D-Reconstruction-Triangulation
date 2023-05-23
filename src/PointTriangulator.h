@@ -7,7 +7,8 @@
 # define THRESHOLD 1e-4 //5e-13 for squared
 # define MAX_ITERATIONS 1000
 # define SQUARED false
-# define MAX_ERROR 70 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
+# define MAX_ERROR 120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
+# define MIN_CAMERAS 3
 
 class PointTriangulator {
     struct Ray {
@@ -19,6 +20,7 @@ class PointTriangulator {
         std::vector<size_t> combination_;
         cv::Point3d point;
         double error;
+        size_t closestPath;
 
         bool operator<(const Combination &c) const{
             int count1 = std::count(combination_.begin(), combination_.end(), 0);
@@ -270,7 +272,7 @@ public:
                 int count = std::count_if(combination.begin(), combination.end(), [&](size_t &i) {
                     return i > 0;
                 });
-                if(count < 2) continue;
+                if(count < MIN_CAMERAS) continue;
 
                 // Create rays for every bounding box in this combination
                 std::vector<Ray> rays;
@@ -280,7 +282,20 @@ public:
                 }
 
                 std::pair<cv::Point3d, double> pointWithError = triangulatePoint(rays);
-                combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
+                if(frame == 0)
+                    combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
+                else{
+                    size_t bestPath = 0;
+                    double bestDist = 1e+6;
+                    for(int j=0; j<n_drones; j++){
+                        double dist = cv::norm(triangulatedPoints[j].back() - pointWithError.first);
+                        if(dist < bestDist){
+                            bestDist = dist;
+                            bestPath = j;
+                        }
+                    }
+                    combinationsQueue.push({combination, pointWithError.first, pointWithError.second, bestPath});
+                }
             }while(increment(combination, n_detections));
 
             // Pick n_drones best combinations
@@ -299,17 +314,7 @@ public:
             }else{
                 // Classify every new point to path
                 for(int i=0; i<finalCombinations.size(); i++){
-                    size_t bestPath = 0;
-                    double bestDist = 1e+6;
-                    for(int j=0; j<n_drones; j++){
-                        double dist = cv::norm(triangulatedPoints[j].back() - finalCombinations[i].point);
-                        if(dist < bestDist){
-                            bestDist = dist;
-                            bestPath = j;
-                        }
-                    }
-                    if(bestDist < 200)
-                        triangulatedPoints[bestPath].push_back(finalCombinations[i].point);
+                    triangulatedPoints[finalCombinations[i].closestPath].push_back(finalCombinations[i].point);
                 }
             }
         }
