@@ -41,6 +41,10 @@ bool DroneClassifier::Combination::increment(std::vector<size_t>& combination, s
     return false;
 }
 
+bool DroneClassifier::CombinationPath::operator > (const CombinationPath& elem) const{
+    return (error < elem.error);
+}
+
 void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones){
     // Add new vector for every drone
     for(int i=0; i<n_drones; i++){
@@ -73,21 +77,7 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             }
 
             std::pair<cv::Point3d, double> pointWithError = triangulator_->triangulatePoint(images);
-
-            if(frame == 0)
-                combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
-            else{
-                // size_t bestPath = 0;
-                // double bestDist = 1e+6;
-                // for(int j=0; j<n_drones; j++){
-                //     double dist = cv::norm(triangulatedPoints[j].back() - pointWithError.first);
-                //     if(dist < bestDist){
-                //         bestDist = dist;
-                //         bestPath = j;
-                //     }
-                // }
-                combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
-            }
+            combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
         }while(Combination::increment(combination, n_detections));
 
         // Pick n_drones best combinations
@@ -105,18 +95,35 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             }
         }else{
             // Classify every new point to path
+            std::vector<CombinationPath> combinationPathVec; // Tuple -> combination, path, error
             for(int i=0; i<finalCombinations.size(); i++){
                 size_t bestPath = 0;
-                double bestDist = 1e+6;
+                double bestDist = 1e+10;
                 for(int j=0; j<n_drones; j++){
-                    double dist = cv::norm(triangulatedPoints[j].back() - finalCombinations[i].point);
+                    // Calculate average error from tail of each path
+                    int nPointsToCheck = std::min(triangulatedPoints[j].size(), (size_t)PATH_TAIL);
+                    double dist = 0;
+                    for(int tail = triangulatedPoints[j].size() - nPointsToCheck; tail<triangulatedPoints[j].size(); tail++){
+                        dist += cv::norm(triangulatedPoints[j][tail] - finalCombinations[i].point);
+                    }
+                    dist /= (double) nPointsToCheck;
+
                     if(dist < bestDist){
                         bestDist = dist;
                         bestPath = j;
                     }
                 }
 
-                triangulatedPoints[bestPath].push_back(finalCombinations[i].point);
+                combinationPathVec.push_back({(size_t)i, bestPath, bestDist});
+            }
+            
+            std::sort(combinationPathVec.begin(), combinationPathVec.end(), greater<CombinationPath>());
+
+            std::vector<size_t> usedPaths;
+            for(const auto& c : combinationPathVec){
+                if(std::find(usedPaths.begin(), usedPaths.end(), c.path) != usedPaths.end()) continue;
+                triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
+                usedPaths.push_back(c.path);
             }
         }
     }

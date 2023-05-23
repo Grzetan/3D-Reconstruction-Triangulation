@@ -165,7 +165,8 @@ void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangula
     for(const auto& p : triangulatedPoints){
         cv::Point3d scaled = p * scale;
         out << scaled.x << " " << scaled.y << " " << scaled.z << "\n";
-        out << scaled.x + faceOffset << " " << scaled.y + faceOffset << " " << scaled.z + faceOffset << "\n";
+        if(addFaces)
+            out << scaled.x + faceOffset << " " << scaled.y + faceOffset << " " << scaled.z + faceOffset << "\n";
     }
 
     if(addFaces){

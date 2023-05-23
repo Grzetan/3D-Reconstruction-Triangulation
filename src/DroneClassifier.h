@@ -1,11 +1,13 @@
 #pragma once
 #include <vector>
 #include <queue>
+#include <algorithm>
 #include <opencv2/opencv.hpp>
 #include "Triangulator.h"
 
 # define MAX_ERROR 120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
-# define MIN_CAMERAS 3
+# define MIN_CAMERAS 3 // Minimum number of cameras for valid combination
+# define PATH_TAIL 1 // Length of path tail. Used in classyfing drones to paths
 
 class DroneClassifier{
 private:
@@ -24,6 +26,14 @@ private:
         bool isCombinationUnique(std::vector<Combination>& combinations);
 
         static bool increment(std::vector<size_t>& combination, std::vector<size_t>& sizes);
+    };
+
+    struct CombinationPath{
+        size_t combination;
+        size_t path;
+        double error;
+
+        bool operator > (const CombinationPath& elem) const;
     };
 
 public:
