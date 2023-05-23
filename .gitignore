@@ -27,6 +27,8 @@ main
 test
 *.c3d
 
+dron*.ply
+
 exp*
 
 *.avi.csv

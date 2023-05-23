@@ -1,8 +1,9 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <chrono>
-#include "PointTriangulator.h"
-#include "HasiecTriangulator.h"
+#include "RayTriangulator.h"
+#include "MatrixTriangulator.h"
+#include "DroneClassifier.h"
 #include "utils.h"
 
 int main(int argc, const char** argv){
@@ -14,7 +15,9 @@ int main(int argc, const char** argv){
     // std::vector<std::vector<cv::Point2d>> dronePoints;
     // loadPointsOneDrone(argv[2], dronePoints);
 
-    PointTriangulator triangulator(cameras);
+    RayTriangulator* triangulator = new RayTriangulator(cameras);
+
+    DroneClassifier classifier(triangulator);
 
     // // First dim = n_cameras, second_dim = n_frames, third_dim = n_drones
     std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
@@ -26,7 +29,7 @@ int main(int argc, const char** argv){
 
     // First dim = n_drones, second dim = n_cameras, third_dim = n_frames
     std::vector<std::vector<cv::Point3d>> triangulatedPoints;
-    triangulator.triangulateMultipleDrones(dronePoints, triangulatedPoints, 2);
+    classifier.classifyDrones(dronePoints, triangulatedPoints, 2);
 
     // auto start = std::chrono::high_resolution_clock::now();
     // // HasiecTriangulator triangulator(cameras);

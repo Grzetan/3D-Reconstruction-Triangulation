@@ -1,10 +1,6 @@
-#include "HasiecTriangulator.h"
+#include "MatrixTriangulator.h"
 
-
-
-
-std::pair<cv::Point3d, double> MatrixMethodTriangulator::triangulatePoint(vector<CamPointPair> images)
-{
+std::pair<cv::Point3d, double> MatrixTriangulator::triangulatePoint(vector<CamPointPair> images){
 
 
     cv::Mat cooficients;// A matrix in equation AX=B
@@ -43,14 +39,12 @@ std::pair<cv::Point3d, double> MatrixMethodTriangulator::triangulatePoint(vector
 }
 
 
-MatrixMethodTriangulator::MatrixMethodTriangulator(std::vector<const tdr::Camera*> cameras_)
-{
-    this->cameras = cameras_;
+MatrixTriangulator::MatrixTriangulator(std::vector<const tdr::Camera*> cameras_){
+    cameras = cameras_;
 }
 
 
-std::vector<cv::Point3d> MatrixMethodTriangulator::triangulatePoints(std::vector<std::vector<cv::Point2d>> points)
-{
+std::vector<cv::Point3d> MatrixTriangulator::triangulatePoints(std::vector<std::vector<cv::Point2d>> points){
     for (int i = 0; i < points.size() - 1; i++) {
         if (points[i].size() != points[i + 1].size())
             throw std::runtime_error("Every camera should have the same number of points");

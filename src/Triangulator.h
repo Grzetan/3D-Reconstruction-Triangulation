@@ -5,10 +5,8 @@
 #include<queue>
 #include "Camera.h"
 
-class Triangulator
-{
-
-private:
+class Triangulator{
+protected:
 	std::vector<cv::Mat> projection_matrices;//< vector of projection matrices in mocap system
 	std::vector<const tdr::Camera*> cameras;
 public:
@@ -18,6 +16,11 @@ public:
 		cv::Point2d point;
 		cv::Mat projectionMatrix() { return camera->cameraPerspectiveMatrix; };
 	};
+
+	std::vector<const tdr::Camera*> getCameras(){
+		return cameras;
+	}
+
 	virtual std::pair<cv::Point3d, double> triangulatePoint(vector<CamPointPair> images) = 0;
 
 	/*! \brief method to 3D reconstruction based on vecotr of 2D positions

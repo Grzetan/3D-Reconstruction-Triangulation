@@ -4,13 +4,7 @@
 #include "Triangulator.h"
 
 
-class MatrixMethodTriangulator : public Triangulator
-{
-
-
-
-private:
-	std::vector<const tdr::Camera*> cameras;
+class MatrixTriangulator : public Triangulator{
 public:
 
 	/*! \brief method to 3D reconstruction based on vector pairs - camera and point
@@ -19,7 +13,7 @@ public:
 	
 	/*! \brief constructor
 	*/
-	MatrixMethodTriangulator(std::vector<const tdr::Camera*> cameras_);
+	MatrixTriangulator(std::vector<const tdr::Camera*> cameras_);
 
 	/*! \brief method to 3D reconstruction based on vecotr of 2D positions
 	*/
