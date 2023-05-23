@@ -143,23 +143,35 @@ const tdr::Camera* createCamera(int id, size_t width, size_t height, double foca
     return cam;
 }
 
-void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangulatedPoints){
+void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangulatedPoints, bool addFaces){
     std::ofstream out(path);
     out << "ply\n";
     out << "format ascii 1.0\n";
-    out << "element vertex " << triangulatedPoints.size() << "\n";
+    int nVertex = addFaces ? triangulatedPoints.size() * 2 : triangulatedPoints.size();
+    out << "element vertex " << nVertex << "\n";
     out << "property float x\n";
     out << "property float y\n";
     out << "property float z\n";
-    out << "element face 0\n";
+    int nFaces = addFaces ? triangulatedPoints.size() : 0;
+    out << "element face " << nFaces << "\n";
     out << "property list uchar int vertex_index\n";
     out << "end_header\n";
 
     double camSize = 0.5;
     double scale = 0.01; //0.01;
+    double faceOffset = 0.1;
 
     // Visualize paths
     for(const auto& p : triangulatedPoints){
-        out << p.x * scale << " " << p.y * scale << " " << p.z * scale << "\n";
+        cv::Point3d scaled = p * scale;
+        out << scaled.x << " " << scaled.y << " " << scaled.z << "\n";
+        if(addFaces)
+            out << scaled.x + faceOffset << " " << scaled.y + faceOffset << " " << scaled.z + faceOffset << "\n";
+    }
+
+    if(addFaces){
+        for(int i=0; i<triangulatedPoints.size(); i++){
+            out << "3 " << i*2 << " " << i*2+1 << " " << i*2+2 << "\n";
+        }
     }
 }

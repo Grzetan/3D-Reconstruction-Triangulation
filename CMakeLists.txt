@@ -9,9 +9,12 @@ set(PATH "./src")
 set(SOURCE_FILES
     ${PATH}/pugixml.hpp
     ${PATH}/pugixml.cpp
-    ${PATH}/HasiecTriangulator.h
-    ${PATH}/HasiecTriangulator.cpp
-    ${PATH}/PointTriangulator.h
+    ${PATH}/MatrixTriangulator.h
+    ${PATH}/MatrixTriangulator.cpp
+    ${PATH}/RayTriangulator.h
+    ${PATH}/RayTriangulator.cpp
+    ${PATH}/DroneClassifier.h
+    ${PATH}/DroneClassifier.cpp
     ${PATH}/utils.h
     ${PATH}/utils.cpp
     ${PATH}/DronClassifier.cpp

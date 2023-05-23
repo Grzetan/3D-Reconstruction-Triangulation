@@ -30,4 +30,4 @@ std::vector<const tdr::Camera*> loadCamerasXML(const char* path);
 
 const tdr::Camera* createCamera(int id, size_t width, size_t height, double focalLength, cv::Mat translation, cv::Mat rotation);
 
-void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangulatedPoints);
+void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangulatedPoints, bool addFaces=true);
