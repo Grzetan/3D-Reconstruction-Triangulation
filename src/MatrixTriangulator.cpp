@@ -71,7 +71,3 @@ std::vector<cv::Point3d> MatrixTriangulator::triangulatePoints(std::vector<std::
     return result;
 }
 
-const tdr::Camera* MatrixMethodTriangulator::getCamera(int camera)
-{
-     return cameras[camera];
-}

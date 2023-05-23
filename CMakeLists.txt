@@ -17,8 +17,7 @@ set(SOURCE_FILES
     ${PATH}/DroneClassifier.cpp
     ${PATH}/utils.h
     ${PATH}/utils.cpp
-    ${PATH}/DronClassifier.cpp
-    ${PATH}/DronClassifier2.cpp
+    ${PATH}/DroneClassifier2.cpp
 
 )
 set(SOURCE_FILES_TEST

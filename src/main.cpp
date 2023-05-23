@@ -4,6 +4,7 @@
 #include "RayTriangulator.h"
 #include "MatrixTriangulator.h"
 #include "DroneClassifier.h"
+#include "DroneClassifier2.h"
 #include "utils.h"
 
 int main(int argc, const char** argv){
@@ -15,13 +16,13 @@ int main(int argc, const char** argv){
     // std::vector<std::vector<cv::Point2d>> dronePoints;
     // loadPointsOneDrone(argv[2], dronePoints);
 
-    RayTriangulator* triangulator = new RayTriangulator(cameras);
+    Triangulator* triangulator = new MatrixTriangulator(cameras);
 
     DroneClassifier classifier(triangulator);
 
     // // First dim = n_cameras, second_dim = n_frames, third_dim = n_drones
     std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
-    loadPointsMultipleDrones(argv[2], dronePoints);
+    loadPointsMultipleDrones(argv[2], dronePoints,0,6);
     
     std::cout << dronePoints[0].size() << std::endl;
 
@@ -42,8 +43,8 @@ int main(int argc, const char** argv){
     auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
     
-    writeOutputFile("dron1.ply", triangulatedPoints[0]);
-    writeOutputFile("dron2.ply", triangulatedPoints[1]);
+    writeOutputFile("dron1H_G.ply", triangulatedPoints[0]);
+    writeOutputFile("dron2H_G.ply", triangulatedPoints[1]);
     // const char* path = (argc == 4) ? argv[3] : "output.ply";
     // writeOutputFile(path, triangulatedPoints);
 }
