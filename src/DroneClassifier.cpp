@@ -98,17 +98,19 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             std::vector<CombinationPath> combinationPathVec; // Tuple -> combination, path, error
             for(int i=0; i<finalCombinations.size(); i++){
                 size_t bestPath = 0;
-                double bestDist = 1e+10;
+                double bestDist = -1;
                 for(int j=0; j<n_drones; j++){
                     // Calculate average error from tail of each path
                     int nPointsToCheck = std::min(triangulatedPoints[j].size(), (size_t)PATH_TAIL);
+                    if(nPointsToCheck == 0) continue;
+
                     double dist = 0;
                     for(int tail = triangulatedPoints[j].size() - nPointsToCheck; tail<triangulatedPoints[j].size(); tail++){
                         dist += cv::norm(triangulatedPoints[j][tail] - finalCombinations[i].point);
                     }
                     dist /= (double) nPointsToCheck;
 
-                    if(dist < bestDist){
+                    if(dist < bestDist || bestDist == -1){
                         bestDist = dist;
                         bestPath = j;
                     }
@@ -121,7 +123,20 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
 
             std::vector<size_t> usedPaths;
             for(const auto& c : combinationPathVec){
-                if(std::find(usedPaths.begin(), usedPaths.end(), c.path) != usedPaths.end()) continue;
+                // If best path is taken or closest path is a path that doesn't exists
+                if(std::find(usedPaths.begin(), usedPaths.end(), c.path) != usedPaths.end()){
+                    int emptyPath = -1;
+                    for(int i=0; i < triangulatedPoints.size(); i++){
+                        if(triangulatedPoints[i].empty()){
+                            emptyPath = i;
+                            break;
+                        }
+                    }
+                    if(emptyPath != -1){
+                        triangulatedPoints[emptyPath].push_back(finalCombinations[c.combination].point);
+                    }
+                    continue;
+                };
                 triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
                 usedPaths.push_back(c.path);
             }

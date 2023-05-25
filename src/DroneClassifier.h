@@ -5,7 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include "Triangulator.h"
 
-# define MAX_ERROR 120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
+# define MAX_ERROR 1e+5 //120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
 # define MIN_CAMERAS 3 // Minimum number of cameras for valid combination
 # define PATH_TAIL 1 // Length of path tail. Used in classyfing drones to paths
 

@@ -4,7 +4,6 @@
 #include "RayTriangulator.h"
 #include "MatrixTriangulator.h"
 #include "DroneClassifier.h"
-#include "DroneClassifier2.h"
 #include "utils.h"
 
 int main(int argc, const char** argv){
@@ -22,7 +21,7 @@ int main(int argc, const char** argv){
 
     // // First dim = n_cameras, second_dim = n_frames, third_dim = n_drones
     std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
-    loadPointsMultipleDrones(argv[2], dronePoints,0,6);
+    loadPointsMultipleDrones(argv[2], dronePoints, 1, 7);
     
     std::cout << dronePoints[0].size() << std::endl;
 
@@ -47,4 +46,9 @@ int main(int argc, const char** argv){
     writeOutputFile("dron2H_G.ply", triangulatedPoints[1]);
     // const char* path = (argc == 4) ? argv[3] : "output.ply";
     // writeOutputFile(path, triangulatedPoints);
+
+    // Free memory
+    delete triangulator;
+    for(const auto& cam : cameras)
+        delete cam;
 }
