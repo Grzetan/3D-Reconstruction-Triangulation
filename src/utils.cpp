@@ -51,21 +51,31 @@ void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vec
 
     std::sort(files.begin(), files.end());
     std::string line, token;
-    int frame, x1, y1, x2, y2;
+    int startFrame = 10000, endFrame = 12000;
 
     for(auto& f : files){
-        int n_line=0;
+        int n_line=0, frame=-1;
         std::ifstream file(f);
         points.push_back({}); // Add new vector for current camera
 
         while (std::getline(file, line)){
-            if(offset > n_line++ || n_line > 2001) continue; // Skip first `offset` lines
+            if(offset > n_line++) continue; // Skip first `offset` lines
             std::istringstream iss(line);
             std::vector<int> seperatedLine;
 
             while(std::getline(iss, token, ',')) {
                 seperatedLine.push_back(std::stoi(token));
             }
+
+            if(seperatedLine[0] <= startFrame || seperatedLine[0] > endFrame){
+                frame = seperatedLine[0];
+                continue;
+            };
+            
+            for(int i=0; i<seperatedLine[0]-frame-1; i++){
+                points.back().push_back({});
+            }
+            frame = seperatedLine[0];
 
             if((seperatedLine.size() - 1) % recordSize != 0)
                 throw std::runtime_error("Invalid CSV file!");

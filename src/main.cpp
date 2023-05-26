@@ -19,6 +19,10 @@ int main(int argc, const char** argv){
 
     DroneClassifier classifier(triangulator);
 
+    // Film (6 ekranow i kazdy dron osobny ekran z sciezka 3d)
+    // Zmienic blad na blad kwadratowy w matrixTriangulator
+    // Zbadac ilosc klatek i czy sa skipowane
+
     // // First dim = n_cameras, second_dim = n_frames, third_dim = n_drones
     std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
     loadPointsMultipleDrones(argv[2], dronePoints, 1, 7);
@@ -42,8 +46,8 @@ int main(int argc, const char** argv){
     auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
     
-    writeOutputFile("dron1H_G.ply", triangulatedPoints[0]);
-    writeOutputFile("dron2H_G.ply", triangulatedPoints[1]);
+    writeOutputFile("dron1H_G.ply", triangulatedPoints[0], true);
+    writeOutputFile("dron2H_G.ply", triangulatedPoints[1], true);
     // const char* path = (argc == 4) ? argv[3] : "output.ply";
     // writeOutputFile(path, triangulatedPoints);
 

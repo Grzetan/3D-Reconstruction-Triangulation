@@ -64,13 +64,13 @@ cv::Point3d convert2global(std::vector<cv::Point3d> cross, cv::Point3d localPoin
 	return globalPoint;
 }
 
-void readInputCSV(const char* dir, Path& path, int offset = 2, int frequency = 4){
+void readInputCSV(const char* dir, Path& path, int offset = 48002, int frequency = 4){
     std::ifstream file(dir);
     std::string line, token;
     int i=0;
     
     while (std::getline(file, line)){
-        if(offset > i++ || (i+offset-1)%frequency != 0 || i/frequency > 2000) continue; // Skip first `offset` lines and skip redundant frequencies
+        if(offset > i++ || (i+offset-1)%frequency != 0 || i/frequency > 14000) continue; // Skip first `offset` lines and skip redundant frequencies
         std::istringstream iss(line);
         std::vector<double> seperatedLine;
 
@@ -101,6 +101,7 @@ double calculateError(Path& labelPath, Path& predPath){
     size_t size = std::min(labelPath.size(), predPath.size());
 
     for(int i=0; i<size; i++){
+        if(predPath[i].x == 0 && predPath[i].y == 0 && predPath[i].z == 0) continue;
         double err = std::sqrt(
             std::pow(predPath[i].x - labelPath[i].x, 2) +
             std::pow(predPath[i].y - labelPath[i].y, 2) +
@@ -151,5 +152,5 @@ int main(int argc, const char** argv){
     // std::cout << error << std::endl;
 
     // Use this to save label points to PLY file
-    writeOutputFile("Dron1_label.ply", labelPath);
+    writeOutputFile("Dron2_label_12k-14k.ply", labelPath);
 }

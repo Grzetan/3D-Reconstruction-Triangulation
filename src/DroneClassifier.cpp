@@ -137,9 +137,17 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
                     }
                     continue;
                 };
+
                 triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
                 usedPaths.push_back(c.path);
             }
+
+            // // Add point [0,0,0] to unused paths to keep frame count
+            // for(int i=0; i<n_drones; i++){
+            //     if(std::find(usedPaths.begin(), usedPaths.end(), i) == usedPaths.end()){
+            //         triangulatedPoints[i].push_back({0,0,0});
+            //     }
+            // }
         }
     }
 }

@@ -28,6 +28,9 @@ test
 *.c3d
 
 dron*.ply
+Dron*.ply
+Dron*label.csv
+*.txt
 
 exp*
 
