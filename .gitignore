@@ -32,6 +32,8 @@ Dron*.ply
 Dron*label.csv
 *.txt
 
+*.blend1
+
 exp*
 
 *.avi.csv
