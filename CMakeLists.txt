@@ -17,15 +17,22 @@ set(SOURCE_FILES
     ${PATH}/DroneClassifier.cpp
     ${PATH}/utils.h
     ${PATH}/utils.cpp
-
+    ${PATH}/argparse.hpp
 )
 set(SOURCE_FILES_TEST
+    ${PATH}/pugixml.hpp
+    ${PATH}/pugixml.cpp
+    ${PATH}/argparse.hpp
+    ${PATH}/utils.h
+    ${PATH}/utils.cpp
     ${PATH}/happly.h
+    ${PATH}/Camera.h
 )
 
 add_executable( ${EXE_NAME} ${PATH}/main.cpp ${SOURCE_FILES} )
 add_executable( ${TEST_EXE_NAME} ${PATH}/test.cpp ${SOURCE_FILES_TEST})
 target_link_libraries( ${EXE_NAME} ${OpenCV_LIBS} )
+target_link_libraries( ${TEST_EXE_NAME} ${OpenCV_LIBS} )
 # add_custom_command(TARGET ${EXE_NAME}
 #                    COMMAND ${EXE_NAME}
 #                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

@@ -9,6 +9,8 @@
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
+typedef std::vector<cv::Point3d> Path;
+
 /**
  * @brief Loads 2D pixel data from CSV file
  * @param path Path to file
@@ -23,11 +25,32 @@ void loadPointsOneDrone(const char* path, std::vector<std::vector<cv::Point2d>>&
  * @param points Output argument, 3D Vector of points. First dim is for cameras, second is for number of frames and third dimention is for drones.
  * @param offset How many lines should we skip at the beggining.
  * @param recordSize How many numbers each detection has
+ * @param startFrame From which frame should path be created
+ * @param endFrame On which frame should path be ended
  */
-void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vector<cv::Point2d>>>& points, int offset = 1, int recordSize = 7);
+void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vector<cv::Point2d>>>& points, int offset = 1, int recordSize = 7, int startFrame = 0, int end_frame = 0);
 
 std::vector<const tdr::Camera*> loadCamerasXML(const char* path);
 
 const tdr::Camera* createCamera(int id, size_t width, size_t height, double focalLength, cv::Mat translation, cv::Mat rotation);
 
 void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangulatedPoints);
+
+double calculateError(Path& labelPath, Path& predPath);
+
+/** Funkcja oblicza globalne współrzędne punku podanego we współrzenych drona
+* @param[in] cross wektor 5 punktów ramion krzyża w postaci [1. punkt ramienia x,2. punkt ramienia x, 1. punkt ramienia y, 2. punkt ramienia y, punkt przecięcia]
+* @param[in] punkt w lokalnym układnie współrzędnych związanych z ramionami x i y
+* @return punkt w globalnym układnie współrzędnych
+*/
+cv::Point3d convert2global(std::vector<cv::Point3d> cross, cv::Point3d localPoint);
+
+/** Funkcja oblicza punkt przecięcia dla ramion krzyża w 3d z uwzględnieniem, że jeden z 4 punktów może nie być współpaszczyznowy z pozostałymi  trzema
+* @param[in] four_points wektor 4 punktów ramion krzyża w postaci niekoniecznie uporządkowanej
+* @param[in] arms wektor dwóch wartości stanowiących długości ramion krzyża
+* @param[in] err maksymalny dopuszczalny błąd między faktyczną długością ramienia, a długością obliczoną na podstawie punktów (w jednostkach tych samych co pozycje markerów ramion)
+* @return wektor 5 punktów krzyża w postaci [1. punkt ramienia x,2. punkt ramienia x, 1. punkt ramienia y, 2. punkt ramienia y, punkt przecięcia]
+*/
+std::vector<cv::Point3d> cross3d(std::vector<cv::Point3d> four_points, std::vector<double> arms = std::vector<double>{9,6}, float err = 1000);
+
+void readInputCSV(const char* dir, Path& path, int offset = 1, int frequency = 4);

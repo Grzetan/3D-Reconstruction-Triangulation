@@ -52,7 +52,7 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
     }
     
     for(int frame=0; frame<points[0].size(); frame++){
-        std::cout << frame << std::endl;
+        std::cout << frame << " / " << points[0].size() << std::endl;
         std::vector<size_t> combination(points.size());
         std::vector<size_t> n_detections(points.size());
         for(int i=0; i<points.size(); i++){
