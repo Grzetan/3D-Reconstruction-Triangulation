@@ -38,10 +38,10 @@ Program takes in as input XML file with camera's data (their's extrinsic and int
 For camera's XML file it creates vector of custom objects that hold camera's information. Note that this vector contain only valid cameras (go to the last four cameras objects in `cameras.xml` file to see valid structure). Every camera has it's ID (it is required that camera's positions in XML file are sorted `ascending` by their's ID's). Note that orientation of camera is a rotation quaternion passed as `(i, j, k, w)` and identity quaternion lays on positive `z axis`. Note that you may have to invert rotation quaternion to make it a orientation quaternion. In that case pass it as `(-i, -j, -k, w)`.
 
 - Detection's file
-For every CSV file we first check to which camera this file is corelelated. Remeber to place CSV files in the same folder and have them in the same order as camera's object's in XML file (Give your cameras some ID's and use corresponding ID's in the name of CSV files). After processing all of the CSV files 2D vector of `cv::Point2d` is created `(n_cams, n_points)`, first dimention corresponds to number of cameras and second dimention corresponds to number of points. Remeber that number of rows in all of the CSV files must be equal. If object isn't detected on frame just pass it as empty row with ID. Each entry in this vector corresponds to pixel coordinates of the center of the bounding box. See CSV files in `referenceBB` folder to see correct structure.
+For every CSV file we first check to which camera this file is corelelated. Remeber to place CSV files in the same folder and have them in the same order as camera's object's in XML file (Give your cameras some ID's and use corresponding ID's in the name of CSV files). CSV file's structure can be different for one drone and multiple drones. See `data_one_drone/referenceBB` folder to see the structure for one drone and `Dron1Dron2LotDowolny/referenceBB` to see the structure for multiple drones. Reading these files can be modifies by adjusting parameters from `loadPointsOneDrone` or `loadPointsMultipleDrones` functions in `main.cpp`. You can also write your own parse function adjusted to your's CSV format.
 
 - Output file
-Program creates `output.ply` file which contains all of the triangulated points, open it in blender to see the path. Name of this file can be provided in the command line arguments as the last argument.
+Program creates `.ply` file which contains all of the triangulated points for each drone, open it in blender to see the path. For example if you run it on data with 3 drones, 3 files will be created: `dron1.ply`, `dron2.ply`, `dron3.ply`.
 
 When you have these files in place run
 
@@ -58,8 +58,25 @@ This will create output binary file `main`, run it by:
 or
 
 ```bash
-./main ./data_one_drone/cameras.xml ./data_one_drone/referenceBB customName.ply
+./main ./data_one_drone/cameras.xml ./data_one_drone/referenceBB
 ```
+
+There are some additional arguments:
+
+#### `--n_drones`:
+When running this algorithm for multiple drones on scene you must specify the number of drones in this argument.
+
+`./main ./Dron1Dron2LotDowolny/cameras.xml ./Dron1Dron2LotDowolny/referenceBB/ --n_drones 2`
+
+#### `--triangulator`:
+You can choose between two methods of triangulation:
+
+ - ##### `MatrixTriangulator`:
+It is the default method. It triangulates points with help of matrices. It is faster are generally more accurate than `RayTriangulator`.
+If you want to use it, don't specify `--triangulator` argument or use `--triangulator matrix`.
+
+ - ##### `RayTriangulator`:
+It is slower and little bit less accurate but it can be heavily modified. It uses openCV's `LMSolver` to triangulate points. Use it with `--triangulator ray`.
 
 ### How it works <a name="how-it-works"></a>
 
