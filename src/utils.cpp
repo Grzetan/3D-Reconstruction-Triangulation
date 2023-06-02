@@ -166,9 +166,7 @@ void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangula
     out << "property list uchar int vertex_index\n";
     out << "end_header\n";
 
-    double camSize = 0.5;
     double scale = 1; //0.01;
-    double faceOffset = 0.1;
 
     // Visualize paths
     for(const auto& p : triangulatedPoints){
@@ -194,7 +192,7 @@ double calculateError(Path& labelPath, Path& predPath){
     return sumError / (double) size;
 }
 
-void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, int endFrame){
+void readInputCSV(const char* dir, Path& path, int frequency, int startFrame = 0, int endFrame = 0){
     std::ifstream file(dir);
     std::string line, token;
     int i=0;
@@ -204,7 +202,7 @@ void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, in
             continue;
         }
 
-        if(i%frequency != 0 || i/frequency < startFrame || i/frequency > endFrame){
+        if(i%frequency != 0 || ((i/frequency < startFrame || i/frequency > endFrame) && startFrame < endFrame)){
             i++;
             continue;
         };
