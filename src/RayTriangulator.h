@@ -10,9 +10,6 @@
 # define SQUARED false
 
 class RayTriangulator : public Triangulator{
-
-	std::string type = "matrix";
-
     struct Ray {
         cv::Point3d origin;
         cv::Point3d dir;

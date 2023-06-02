@@ -41,6 +41,7 @@ std::pair<cv::Point3d, double> MatrixTriangulator::triangulatePoint(vector<CamPo
 
 MatrixTriangulator::MatrixTriangulator(std::vector<const tdr::Camera*> cameras_){
     cameras = cameras_;
+    type_ = "matrix";
 }
 
 

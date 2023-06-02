@@ -7,7 +7,7 @@
 
 class Triangulator{
 protected:
-	std::string type;
+	std::string type_;
 	std::vector<cv::Mat> projection_matrices;//< vector of projection matrices in mocap system
 	std::vector<const tdr::Camera*> cameras;
 public:
@@ -32,6 +32,6 @@ public:
 	}
 
 	std::string getType(){
-		return type;
+		return type_;
 	};
 };

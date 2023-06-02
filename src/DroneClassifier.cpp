@@ -113,9 +113,19 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
                     if(nPointsToCheck == 0) continue;
 
                     double dist = 0;
-                    for(int tail = triangulatedPoints[j].size() - nPointsToCheck; tail<triangulatedPoints[j].size(); tail++){
-                        dist += cv::norm(triangulatedPoints[j][tail] - finalCombinations[i].point);
+                    size_t current_tail = nPointsToCheck;
+                    int k = triangulatedPoints[j].size() - 1;
+                    while(current_tail > 0 && k > 0){
+                        if(triangulatedPoints[j][k] == cv::Point3d(0, 0, 0)){
+                            k--;
+                            continue;
+                        }
+
+                        dist += cv::norm(triangulatedPoints[j][k] - finalCombinations[i].point);
+                        k--;
+                        current_tail--;
                     }
+
                     dist /= (double) nPointsToCheck;
 
                     if(dist < bestDist || bestDist == -1){
@@ -135,7 +145,13 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
                 if(std::find(usedPaths.begin(), usedPaths.end(), c.path) != usedPaths.end()){
                     int emptyPath = -1;
                     for(int i=0; i < triangulatedPoints.size(); i++){
-                        if(triangulatedPoints[i].empty()){
+                        int n_not_empty = 0;
+                        for(int j=0; j<triangulatedPoints[i].size(); j++){
+                            if(triangulatedPoints[i][j] != cv::Point3d(0, 0, 0))
+                                n_not_empty++;
+                        }
+
+                        if(n_not_empty > 0){
                             emptyPath = i;
                             break;
                         }
@@ -150,12 +166,12 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
                 usedPaths.push_back(c.path);
             }
 
-            // // Add point [0,0,0] to unused paths to keep frame count
-            // for(int i=0; i<n_drones; i++){
-            //     if(std::find(usedPaths.begin(), usedPaths.end(), i) == usedPaths.end()){
-            //         triangulatedPoints[i].push_back({0,0,0});
-            //     }
-            // }
+            // Add point [0,0,0] to unused paths to keep frame count
+            for(int i=0; i<n_drones; i++){
+                if(std::find(usedPaths.begin(), usedPaths.end(), i) == usedPaths.end()){
+                    triangulatedPoints[i].push_back({0,0,0});
+                }
+            }
         }
     }
 }

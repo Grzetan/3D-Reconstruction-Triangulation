@@ -2,6 +2,7 @@
 
 RayTriangulator::RayTriangulator(std::vector<const tdr::Camera*> cameras_){
     cameras = cameras_;
+    type_ = "ray";
 }
 
 
