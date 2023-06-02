@@ -9,8 +9,7 @@
 2. [How to use](#how-to-use)
 3. [How it works](#how-it-works)
 4. [Testing](#testing)
-5. [Drone tracking concept](#drone-tracking)
-6. [Results](#results)
+5. [Results](#results)
 
 -----
 
@@ -159,12 +158,18 @@ Note that if you want to test every drone on the recording you must run test scr
 
  - Here is a result video for one drone:
 
+    https://github.com/Grzetan/3D-Reconstruction-Triangulation/assets/52281852/e778cb4b-dd2c-4a40-9415-08f4d592b6a3
 
     Red path is a label path from Vicon system and blue path is predicted path.
+    
+    For this recording average erros is about 2 cm.
 
 
 
  - Here is a visualization for two drones:
 
+    https://github.com/Grzetan/3D-Reconstruction-Triangulation/assets/52281852/b3cb6896-328b-48a1-aadc-ef6daa042d7e
 
     Darker path means label path from vicon and light path is detected path.
+    
+    For the red drone error is about 9 cm and for blue drone 13 cm.
