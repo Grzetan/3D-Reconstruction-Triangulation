@@ -29,7 +29,6 @@ test
 
 dron*.ply
 Dron*.ply
-Dron*label.csv
 *.txt
 
 *.blend1

@@ -66,7 +66,7 @@ int main(int argc, const char** argv){
         std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
 
         for(int i=1; i<=n_drones; i++){
-            std::string name = "dron" + std::to_string(i) + ".ply";
+            std::string name = "drone" + std::to_string(i) + ".ply";
             writeOutputFile(name.c_str(), triangulatedPoints[i-1]);
         }
 

@@ -124,95 +124,47 @@ After calculating 3D point for each frame, vector of those points is returned.
 
 ### Testing <a name="testing"></a>
 
-To test the algorithm a CSV file for true drone 3D positions is required.
+To test the algorithm a CSV file for true drone 3D positions is required. In my case label data is collected from Vicon which is 3D tracking system. There are 4 markers on each drone, then center of cross is calculated which is then offset by some vector to be in the visual center of the drone. Output error is in the same units as camera's positions in `.xml` file. For example is we pass cameras positions in `cm` these errors will also be in `cm`.
+
+To test the results run this command:
 
 ```bash
 ./test output.ply ./data_one_drone/labels.csv
 ```
 
-We run testing program with output PLY file and CSV file that contains labels. The program will print out quadratic and normal error. This error is in the same unit as camera's positions. For example is we pass cameras positions in `cm` these errors will also be in `cm`.
+There are a few parameters:
 
-### Drone Tracking Concept <a name="drone-tracking"></a>
+- `--frequency`:
+    System vicon has higher frequency than cameras so that's why there is a `--frequency` parameter.
+    
+    ```bash
+    ./test drone2.ply ./Dron1Dron2LotDowolny/Dron2_label.csv --frequency 4
+    ```    
 
-Algorithm idea for single drone tracking.
+    This means that every fourth row will be read from CSV file.
 
-##### Problem 1 - Classifying drones on starting frame.
+- `--output`:
+    You can save CSV file in `.ply` file that can be also visualized in blender.
 
-It is required that we know which drone is which on starting frame so for example drone `1` is the same drone on each camera.
+    ```bash
+    ./test drone1.ply ./Dron1Dron2LotDowolny/Dron1_label.csv --output label.ply
+    ```   
 
-We can achive this by two ways:
+    This will create a `label.ply` file with label path of the drone.
 
-1. We classify drones incrementally:
-    - For every bounding box on the first frame on the first camera we create seperate ID. Those will be ID's assigned to drones. Then for every ID we run `PointTriangulator` with every bounding box on the first frame on the second camera and assign ID's by picking bounding boxes which have smallest error. We than repeat these steps for all of the cameras.
-    Here is a pseudo code that hopefully explains it:
-    ```c++
-    paths = [] // 2D vector containing vector of paths for every camera
-    drones = [] // 2D vector containing rays for each drone
-    for box in first_frame_first_camera
-        drones <-- vector with ray for box // After this drones size will be [n_boxes, 1]
-        paths[0] <-- path with starting point at center of box and ID equal to box_position
+Note that if you want to test every drone on the recording you must run test script for every drone seperatly.
 
-    for cam in all_cams_except_first
-        for drone in drones
-            smallest_error = 1e+9 // absurdly high value
-            best_box = 0
-            for box in first_frame_current_cam
-                if triangulate_error < smallest_error
-                    smallest_error = triangulate_error
-                    best_box = box_position
-            drones[drone_position] <-- ray for best_box
-            paths[cam_position] <-- path with starting point at center of best_box and ID equal to drone_position
-    ```
-
-    - After that we have a vector of path for every camera which will allow us to track each drone.
-
-    - I'm not sure that we can guarantee than drone classification on every camera will be 100% correct.
-
-    - Note that only requirement for this is that every drone must be detected on the first frame on every camera
-
-    - (Some kind of threshold can be added for triangulation_error so not every drone must be visible on the fist frame. If algorithm encounters new drone later we can simply create a new path).
-
-2. We classify drones `all at once`:
-
-    - We create every combination of bounding boxes on first frame on every camera (`n_drones ^ n_cameras` combinations ). We than pick `n_drones` combinations with best triangulation error and create paths from saved pixel coordinates from every camera. When picking best combinations it is remembered that final set of combinations must have every box from every cam. 
-
-    - This approach can be more accurate but more computationally expensive.
-
-    - The only requirement for this is that every drone must be detected on the first frame on every camera
-
-### Problem 2 - Keeping track of drones
-
-After we successfully classified bounding boxes on the first frame we have to classify bounding boxes on the rest of the frames.
-
-These ideas must be repeated for every camera
-
-Here are the two main ideas:
-
-1. Classify using last point in path
-    - To classify detected bounding boxes on new frame we add them to the closest path.
-
-    - Here is a pseudo code:
-
-    ```c++
-    classified_boxes = [-1, -1, ..., -1] // Size equal to number of bounding boxes on frame
-    for path in every_path_for_camera:
-        box = bounding box that is closest to last point in path
-        path <-- coordinates of box
-        classified_boxes[box_position] <-- path_position
-    ```
-
-    - After classifying boxes for every camera we know wchich coordinates to pass to `PointTriangulator` and to which drone they correspond to.
-
-    - This approach can malfunction if on some frame drones are alligning, in that case some drones might be accidentally swaped.
-
-    - Is is immune to the lack of detection on some frame, we just simply don't update the path.
 
 ### Results <a name="results"></a>
 
-This algorithm gives very promising results. After looking at this example video and keeping track of drone's starting movement and landing movement we can clearly see that resulting path is nearly identical to real-life drone path.
+ - Here is a result video for one drone:
 
-https://user-images.githubusercontent.com/52281852/236529833-4a88aa2c-12d0-4e60-8345-53f72cf3c8c1.mp4
 
-Resulting path:
+    Red path is a label path from Vicon system and blue path is predicted path.
 
-![image](imgs/result-path.png)
+
+
+ - Here is a visualization for two drones:
+
+
+    Darker path means label path from vicon and light path is detected path.

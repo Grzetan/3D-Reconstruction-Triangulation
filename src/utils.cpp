@@ -200,10 +200,15 @@ void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, in
     int i=0;
     
     while (std::getline(file, line)){
+        if(line.find("Drone") != std::string::npos){
+            continue;
+        }
+
         if(i%frequency != 0 || i/frequency < startFrame || i/frequency > endFrame){
             i++;
             continue;
         };
+        i++;
         
         std::istringstream iss(line);
         std::vector<double> seperatedLine;
@@ -212,7 +217,7 @@ void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, in
             seperatedLine.push_back(std::stod(token));
         }
 
-        if(seperatedLine.size() != 15){
+        if(seperatedLine.size() != 12){
             throw std::runtime_error("Error at CSV file");
         }
 
@@ -224,8 +229,8 @@ void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, in
         std::vector<cv::Point3d> cross = cross3d(markerPos);
         if(cross.size() != 5) continue;
 
-        cv::Point3d center = convert2global(cross, {50, 0, -20});
-        // cv::Point3d center = convert2global(cross, {-180, 200, -450});
+        // cv::Point3d center = convert2global(cross, {50, 0, -20});
+        cv::Point3d center = convert2global(cross, {-180, 200, -450});
         path.push_back(center);
     }
 }

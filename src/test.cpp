@@ -23,7 +23,7 @@ int main(int argc, const char** argv){
 
     args.add_argument("--output")
     .help("Name of the optional output file")
-    .default_value("None");
+    .default_value<std::string>("None");
 
     try {
         args.parse_args(argc, argv);
@@ -45,7 +45,7 @@ int main(int argc, const char** argv){
     readInputCSV(args.get("label_path").c_str(), labelPath, args.get<int>("--frequency"), 500, 2500);
 
     double error = calculateError(labelPath, predPath);
-    std::cout << error << std::endl;
+    std::cout << "Error: " << error << std::endl;
 
     if(args.get<std::string>("--output") != "None"){
         writeOutputFile(args.get<std::string>("--output").c_str(), labelPath);
