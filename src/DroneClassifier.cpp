@@ -1,5 +1,13 @@
 #include "DroneClassifier.h"
 
+DroneClassifier::DroneClassifier(Triangulator* triangulator) : triangulator_(triangulator){
+    if(triangulator->getType() == "matrix"){
+        error_ = MAX_ERROR_MATRIX;
+    }else if(triangulator->getType() == "ray"){
+        error_ = MAX_ERROR_RAY;
+    }
+}
+
 bool DroneClassifier::Combination::operator<(const Combination& c) const {
     int count1 = std::count(combination_.begin(), combination_.end(), 0);
     int count2 = std::count(c.combination_.begin(), c.combination_.end(), 0);
@@ -84,7 +92,7 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
         std::vector<Combination> finalCombinations;
         while(!combinationsQueue.empty() && finalCombinations.size() < n_drones){
             Combination c = combinationsQueue.top();
-            if(c.isCombinationUnique(finalCombinations) && c.error < MAX_ERROR) finalCombinations.push_back(c);
+            if(c.isCombinationUnique(finalCombinations) && c.error < error_) finalCombinations.push_back(c);
             combinationsQueue.pop();
         }
 

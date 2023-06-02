@@ -7,6 +7,8 @@
 class MatrixTriangulator : public Triangulator{
 public:
 	
+	std::string type = "matrix";
+
 	/*! \brief method to 3D reconstruction based on vector pairs - camera and point
 	*/
 	std::pair<cv::Point3d, double> triangulatePoint(vector<CamPointPair> images) override;
