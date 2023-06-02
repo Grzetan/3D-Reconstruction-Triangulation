@@ -188,20 +188,23 @@ double calculateError(Path& labelPath, Path& predPath){
             std::pow(predPath[i].y - labelPath[i].y, 2) +
             std::pow(predPath[i].z - labelPath[i].z, 2)
         );
-        // std::cout << err << std::endl;
         sumError += err;
     }
 
     return sumError / (double) size;
 }
 
-void readInputCSV(const char* dir, Path& path, int offset, int frequency){
+void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, int endFrame){
     std::ifstream file(dir);
     std::string line, token;
     int i=0;
     
     while (std::getline(file, line)){
-        if(offset > i++ || (i+offset-1)%frequency != 0) continue; // Skip first `offset` lines and skip redundant frequencies
+        if(i%frequency != 0 || i/frequency < startFrame || i/frequency > endFrame){
+            i++;
+            continue;
+        };
+        
         std::istringstream iss(line);
         std::vector<double> seperatedLine;
 
@@ -209,7 +212,7 @@ void readInputCSV(const char* dir, Path& path, int offset, int frequency){
             seperatedLine.push_back(std::stod(token));
         }
 
-        if(seperatedLine.size() != 12){
+        if(seperatedLine.size() != 15){
             throw std::runtime_error("Error at CSV file");
         }
 

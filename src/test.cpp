@@ -1,25 +1,53 @@
 #include <iostream>
 #include <fstream>
 #include <opencv2/opencv.hpp>
+#include "argparse.hpp"
 #include "happly.h"
 #include "utils.h"
 
 int main(int argc, const char** argv){
-    if(argc != 3) throw std::runtime_error("Input paths must be provided");
+    argparse::ArgumentParser args("3D-Reconstruction-Triangulation"); 
 
-    // happly::PLYData inputPLY(argv[1]);
-    // auto predPathHapply = inputPLY.getVertexPositions();
-    // Path predPath;
-    // for(const auto& p : predPathHapply){
-    //     predPath.push_back({p[0], p[1], p[2]});
-    // }
+    args.add_argument("pred_path")
+    .help("Path to the PLY file with predictions")
+    .required();
+
+    args.add_argument("label_path")
+    .help("Path to the CSV file from Vicon")
+    .required();
+
+    args.add_argument("--frequency")
+    .help("How many lines in label file correspond to one frame")
+    .scan<'i', int>()
+    .default_value(1);
+
+    args.add_argument("--output")
+    .help("Name of the optional output file")
+    .default_value("None");
+
+    try {
+        args.parse_args(argc, argv);
+    }
+    catch (const std::runtime_error& err) {
+        std::cerr << err.what() << std::endl;
+        std::cerr << args;
+        std::exit(1);
+    }
+
+    happly::PLYData inputPLY(args.get("pred_path").c_str());
+    auto predPathHapply = inputPLY.getVertexPositions();
+    Path predPath;
+    for(const auto& p : predPathHapply){
+        predPath.push_back({p[0], p[1], p[2]});
+    }
 
     Path labelPath;
-    readInputCSV(argv[2], labelPath);
+    readInputCSV(args.get("label_path").c_str(), labelPath, args.get<int>("--frequency"), 500, 2500);
 
-    // double error = calculateError(labelPath, predPath);
-    // std::cout << error << std::endl;
+    double error = calculateError(labelPath, predPath);
+    std::cout << error << std::endl;
 
-    // Use this to save label points to PLY file
-    writeOutputFile("dronT02_label.ply", labelPath);
+    if(args.get<std::string>("--output") != "None"){
+        writeOutputFile(args.get<std::string>("--output").c_str(), labelPath);
+    }
 }
