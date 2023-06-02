@@ -54,9 +54,12 @@ bool DroneClassifier::CombinationPath::operator > (const CombinationPath& elem) 
 }
 
 void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones){
+    std::vector<std::vector<int>> emptyFrames;
+
     // Add new vector for every drone
     for(int i=0; i<n_drones; i++){
         triangulatedPoints.push_back({});
+        emptyFrames.push_back({});
     }
     
     for(int frame=0; frame<points[0].size(); frame++){
@@ -96,82 +99,66 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             combinationsQueue.pop();
         }
 
-        // Pick best drone path for each new point
-        if(frame == 0){
-            for(int i=0; i<finalCombinations.size(); i++){
-                triangulatedPoints[i].push_back(finalCombinations[i].point);
-            }
-        }else{
-            // Classify every new point to path
-            std::vector<CombinationPath> combinationPathVec; // Tuple -> combination, path, error
-            for(int i=0; i<finalCombinations.size(); i++){
-                size_t bestPath = 0;
-                double bestDist = -1;
-                for(int j=0; j<n_drones; j++){
-                    // Calculate average error from tail of each path
-                    int nPointsToCheck = std::min(triangulatedPoints[j].size(), (size_t)PATH_TAIL);
-                    if(nPointsToCheck == 0) continue;
+        // Classify every new point to path
+        std::vector<CombinationPath> combinationPathVec; // Tuple -> combination, path, error
+        for(int i=0; i<finalCombinations.size(); i++){
+            size_t bestPath = 0;
+            double bestDist = -1;
+            for(int j=0; j<n_drones; j++){
+                // Calculate average error from tail of each path
+                int nPointsToCheck = std::min(triangulatedPoints[j].size(), (size_t)PATH_TAIL);
+                if(nPointsToCheck == 0) continue;
 
-                    double dist = 0;
-                    size_t current_tail = nPointsToCheck;
-                    int k = triangulatedPoints[j].size() - 1;
-                    while(current_tail > 0 && k > 0){
-                        if(triangulatedPoints[j][k] == cv::Point3d(0, 0, 0)){
-                            k--;
-                            continue;
-                        }
-
-                        dist += cv::norm(triangulatedPoints[j][k] - finalCombinations[i].point);
-                        k--;
-                        current_tail--;
-                    }
-
-                    dist /= (double) nPointsToCheck;
-
-                    if(dist < bestDist || bestDist == -1){
-                        bestDist = dist;
-                        bestPath = j;
-                    }
+                double dist = 0;
+                for(int tail = triangulatedPoints[j].size() - nPointsToCheck; tail<triangulatedPoints[j].size(); tail++){
+                    dist += cv::norm(triangulatedPoints[j][tail] - finalCombinations[i].point);
                 }
+                dist /= (double) nPointsToCheck;
 
-                combinationPathVec.push_back({(size_t)i, bestPath, bestDist});
-            }
-            
-            std::sort(combinationPathVec.begin(), combinationPathVec.end(), greater<CombinationPath>());
-
-            std::vector<size_t> usedPaths;
-            for(const auto& c : combinationPathVec){
-                // If best path is taken or closest path is a path that doesn't exists
-                if(std::find(usedPaths.begin(), usedPaths.end(), c.path) != usedPaths.end()){
-                    int emptyPath = -1;
-                    for(int i=0; i < triangulatedPoints.size(); i++){
-                        int n_not_empty = 0;
-                        for(int j=0; j<triangulatedPoints[i].size(); j++){
-                            if(triangulatedPoints[i][j] != cv::Point3d(0, 0, 0))
-                                n_not_empty++;
-                        }
-
-                        if(n_not_empty > 0){
-                            emptyPath = i;
-                            break;
-                        }
-                    }
-                    if(emptyPath != -1){
-                        triangulatedPoints[emptyPath].push_back(finalCombinations[c.combination].point);
-                    }
-                    continue;
-                };
-
-                triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
-                usedPaths.push_back(c.path);
-            }
-
-            // Add point [0,0,0] to unused paths to keep frame count
-            for(int i=0; i<n_drones; i++){
-                if(std::find(usedPaths.begin(), usedPaths.end(), i) == usedPaths.end()){
-                    triangulatedPoints[i].push_back({0,0,0});
+                if(dist < bestDist || bestDist == -1){
+                    bestDist = dist;
+                    bestPath = j;
                 }
             }
+
+            combinationPathVec.push_back({(size_t)i, bestPath, bestDist});
+        }
+        
+        std::sort(combinationPathVec.begin(), combinationPathVec.end(), greater<CombinationPath>());
+
+        std::vector<size_t> usedPaths;
+        for(const auto& c : combinationPathVec){
+            // If best path is taken or closest path is a path that doesn't exists
+            if(std::find(usedPaths.begin(), usedPaths.end(), c.path) != usedPaths.end()){
+                int emptyPath = -1;
+                for(int i=0; i < triangulatedPoints.size(); i++){
+                    if(triangulatedPoints[i].empty()){
+                        emptyPath = i;
+                        break;
+                    }
+                }
+                if(emptyPath != -1){
+                    triangulatedPoints[emptyPath].push_back(finalCombinations[c.combination].point);
+                }
+                continue;
+            };
+
+            triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
+            usedPaths.push_back(c.path);
+        }
+
+        // Add point [0,0,0] to unused paths to keep frame count
+        for(int i=0; i<n_drones; i++){
+            if(std::find(usedPaths.begin(), usedPaths.end(), i) == usedPaths.end()){
+                emptyFrames[i].push_back(frame);
+            }
+        }
+    }
+
+    // Add [0,0,0] to empty detections
+    for(int i=0; i<emptyFrames.size(); i++){
+        for(int j=0; j<emptyFrames[i].size(); j++){
+            triangulatedPoints[i].insert(triangulatedPoints[i].begin() + emptyFrames[i][j], cv::Point3d(0,0,0));
         }
     }
 }
