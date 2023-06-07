@@ -53,4 +53,4 @@ cv::Point3d convert2global(std::vector<cv::Point3d> cross, cv::Point3d localPoin
 */
 std::vector<cv::Point3d> cross3d(std::vector<cv::Point3d> four_points, std::vector<double> arms = std::vector<double>{9,6}, float err = 1000);
 
-void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, int endFrame);
+void readInputCSV(const char* dir, Path& path, int frequency, int startFrame=0, int endFrame=0);

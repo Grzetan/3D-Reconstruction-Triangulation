@@ -192,7 +192,7 @@ double calculateError(Path& labelPath, Path& predPath){
     return sumError / (double) size;
 }
 
-void readInputCSV(const char* dir, Path& path, int frequency, int startFrame = 0, int endFrame = 0){
+void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, int endFrame){
     std::ifstream file(dir);
     std::string line, token;
     int i=0;

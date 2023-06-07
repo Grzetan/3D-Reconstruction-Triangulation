@@ -42,7 +42,7 @@ int main(int argc, const char** argv){
     }
 
     Path labelPath;
-    readInputCSV(args.get("label_path").c_str(), labelPath, args.get<int>("--frequency"), 500, 2500);
+    readInputCSV(args.get("label_path").c_str(), labelPath, args.get<int>("--frequency"));
 
     double error = calculateError(labelPath, predPath);
     std::cout << "Error: " << error << std::endl;
