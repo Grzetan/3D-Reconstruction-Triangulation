@@ -81,7 +81,7 @@ void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vec
 
             points.back().push_back({}); // Add vector for new frame
 
-            for(int j=0; j<seperatedLine.size() / 6; j++){
+            for(int j=0; j<seperatedLine.size() / recordSize; j++){
                 cv::Point2d point;
                 point.x = seperatedLine[j*recordSize+5]; 
                 point.y = seperatedLine[j*recordSize+6];
