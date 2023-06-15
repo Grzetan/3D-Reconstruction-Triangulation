@@ -7,7 +7,7 @@
 
 # define MAX_ERROR_MATRIX 1e+5//120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
 # define MAX_ERROR_RAY 120
-# define MIN_CAMERAS 6 // Minimum number of cameras for valid combination
+# define MIN_CAMERAS 3 // Minimum number of cameras for valid combination
 # define PATH_TAIL 3 // Length of path tail. Used in classyfing drones to paths
 
 class DroneClassifier{

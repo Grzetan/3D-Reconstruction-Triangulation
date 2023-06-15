@@ -53,7 +53,7 @@ int main(int argc, const char** argv){
         DroneClassifier classifier(triangulator);
 
         std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
-        loadPointsMultipleDrones(args.get("data_path").c_str(), dronePoints, 1, 7, 0, 2000);
+        loadPointsMultipleDrones(args.get("data_path").c_str(), dronePoints, 1, 7);
 
         auto start = std::chrono::high_resolution_clock::now();
 

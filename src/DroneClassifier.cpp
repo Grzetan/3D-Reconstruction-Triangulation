@@ -57,7 +57,7 @@ bool DroneClassifier::Iterator::increment(){
     }
     // If there are no -1 bits, increment last bit
     for(int i=combination_.size() - 1; i>=0; i--){
-        if(combination_[i] < sizes_[i]){
+        if(combination_[i] < sizes_[i] - 1){
             combination_[i]++;
             return true;
         }else{
@@ -71,7 +71,7 @@ bool DroneClassifier::Iterator::increment(){
 
 bool DroneClassifier::Iterator::cut(){
     for(int i=combination_.size() - 1; i>=0; i--){
-        if(combination_[i] != -1 && combination_[i] < sizes_[i]){
+        if(combination_[i] != -1 && combination_[i] < sizes_[i] - 1){
             combination_[i]++;
             skipNext = true;
             return true;
@@ -122,7 +122,6 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             std::vector<Triangulator::CamPointPair> images;
             for(int i=0; i<combination.size(); i++){
                 if(combination[i] <= 0) continue; // Index 0 or -1 means no detection or camera isn't taken into account so we can skip it
-                points[i][frame][combination[i]-1];
                 images.push_back({triangulator_->getCameras()[i], points[i][frame][combination[i]-1]});
             }
 
@@ -130,14 +129,11 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             
             // If at some point combination's error is too big, cut the rest of combinations
             if(pointWithError.second > error_){
-                std::cout << "OK" << std::endl;
-                iterator.cut();
+                if(!iterator.cut()) break;
             }
             // Add combination to queue only if all of the cameras are taken into account
             else if(std::find(combination.begin(), combination.end(), -1) == combination.end()){
                 combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
-            }else{
-                std::cout << "OK" << std::endl;
             }
         }
 
