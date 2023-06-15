@@ -16,19 +16,30 @@ private:
 
     double error_;
 
+    class Iterator{
+        std::vector<int> combination_;
+        bool skipNext = false;
+        const std::vector<int> sizes_;
+    public:
+        Iterator(std::vector<int> sizes);
+
+        bool increment();
+
+        bool cut();
+
+        std::vector<int> getCombination();
+    };
+
     struct Combination {
-        std::vector<size_t> combination_;
+        std::vector<int> combination_;
         cv::Point3d point;
         double error;
-        // size_t closestPath;
 
         bool operator<(const Combination& c) const;
 
         bool operator>(const Combination& c) const;
 
         bool isCombinationUnique(std::vector<Combination>& combinations);
-
-        static bool increment(std::vector<size_t>& combination, std::vector<size_t>& sizes);
     };
 
     struct CombinationPath{

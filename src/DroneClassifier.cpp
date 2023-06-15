@@ -37,19 +37,56 @@ bool DroneClassifier::Combination::isCombinationUnique(std::vector<Combination>&
     return true;
 }
 
-bool DroneClassifier::Combination::increment(std::vector<size_t>& combination, std::vector<size_t>& sizes){
-    for(int i=combination.size() - 1; i>=0; i--){
-        if (combination[i] < sizes[i] - 1) {
-            combination[i]++;
+DroneClassifier::Iterator::Iterator(std::vector<int> sizes): sizes_(sizes){
+    combination_ = std::vector<int>(sizes.size(), -1);
+}
+
+bool DroneClassifier::Iterator::increment(){
+    // Check if combination was cut
+    if(skipNext){
+        skipNext = false;
+        return true;
+    }
+
+    // Increment first -1 bit
+    for(int i=0; i<combination_.size(); i++){
+        if (combination_[i] == -1) {
+            combination_[i]++;
             return true;
-        } else {
-            combination[i] = 0;
+        }
+    }
+    // If there are no -1 bits, increment last bit
+    for(int i=combination_.size() - 1; i>=0; i--){
+        if(combination_[i] < sizes_[i]){
+            combination_[i]++;
+            return true;
+        }else{
+            combination_[i] = -1;
+        }
+    }
+
+    return false;
+}
+
+
+bool DroneClassifier::Iterator::cut(){
+    for(int i=combination_.size() - 1; i>=0; i--){
+        if(combination_[i] != -1 && combination_[i] < sizes_[i]){
+            combination_[i]++;
+            skipNext = true;
+            return true;
+        }else{
+            combination_[i] = -1;
         }
     }
     return false;
 }
 
-bool DroneClassifier::CombinationPath::operator > (const CombinationPath& elem) const{
+std::vector<int> DroneClassifier::Iterator::getCombination(){
+    return combination_;
+}
+
+bool DroneClassifier::CombinationPath::operator>(const CombinationPath& elem) const{
     return (error < elem.error);
 }
 
@@ -64,17 +101,19 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
     
     for(int frame=0; frame<points[0].size(); frame++){
         std::cout << frame << " / " << points[0].size() << std::endl;
-        std::vector<size_t> combination(points.size());
-        std::vector<size_t> n_detections(points.size());
+        std::vector<int> n_detections(points.size());
         for(int i=0; i<points.size(); i++){
             n_detections[i] = points[i][frame].size() + 1; // Plus one for no detection
         }
 
+        Iterator iterator(n_detections);
         std::priority_queue<Combination> combinationsQueue;
 
-        do{
+        while(iterator.increment()){
+            std::vector<int> combination = iterator.getCombination();
+
             // Skip combination if number of cameras is not enough
-            int count = std::count_if(combination.begin(), combination.end(), [&](size_t &i) {
+            int count = std::count_if(combination.begin(), combination.end(), [&](int &i) {
                 return i > 0;
             });
             if(count < MIN_CAMERAS) continue;
@@ -82,20 +121,31 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             // Create rays for every bounding box in this combination
             std::vector<Triangulator::CamPointPair> images;
             for(int i=0; i<combination.size(); i++){
-                if(combination[i] == 0) continue; // First index means no detection so we can skip it
+                if(combination[i] <= 0) continue; // Index 0 or -1 means no detection or camera isn't taken into account so we can skip it
                 points[i][frame][combination[i]-1];
                 images.push_back({triangulator_->getCameras()[i], points[i][frame][combination[i]-1]});
             }
 
             std::pair<cv::Point3d, double> pointWithError = triangulator_->triangulatePoint(images);
-            combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
-        }while(Combination::increment(combination, n_detections));
+            
+            // If at some point combination's error is too big, cut the rest of combinations
+            if(pointWithError.second > error_){
+                std::cout << "OK" << std::endl;
+                iterator.cut();
+            }
+            // Add combination to queue only if all of the cameras are taken into account
+            else if(std::find(combination.begin(), combination.end(), -1) == combination.end()){
+                combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
+            }else{
+                std::cout << "OK" << std::endl;
+            }
+        }
 
         // Pick n_drones best combinations
         std::vector<Combination> finalCombinations;
         while(!combinationsQueue.empty() && finalCombinations.size() < n_drones){
             Combination c = combinationsQueue.top();
-            if(c.isCombinationUnique(finalCombinations) && c.error < error_) finalCombinations.push_back(c);
+            if(c.isCombinationUnique(finalCombinations)) finalCombinations.push_back(c);
             combinationsQueue.pop();
         }
 
