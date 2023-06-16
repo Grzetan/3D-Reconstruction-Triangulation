@@ -116,7 +116,7 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             int count = std::count_if(combination.begin(), combination.end(), [&](int &i) {
                 return i > 0;
             });
-            if(count < MIN_CAMERAS) continue;
+            if(count < 2) continue;
 
             // Create rays for every bounding box in this combination
             std::vector<Triangulator::CamPointPair> images;
@@ -126,13 +126,16 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             }
 
             std::pair<cv::Point3d, double> pointWithError = triangulator_->triangulatePoint(images);
-            
+
             // If at some point combination's error is too big, cut the rest of combinations
             if(pointWithError.second > error_){
                 if(!iterator.cut()) break;
             }
             // Add combination to queue only if all of the cameras are taken into account
-            else if(std::find(combination.begin(), combination.end(), -1) == combination.end()){
+            else if(std::find(combination.begin(), combination.end(), -1) == combination.end() && 
+                    std::count_if(combination.begin(), combination.end(), [&](int &i) {
+                        return i > 0;
+                    }) >= MIN_CAMERAS){
                 combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
             }
         }
