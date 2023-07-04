@@ -154,9 +154,25 @@ namespace tdr
 		/*! \brief Compute camera postion based on OpenCV rotation and translation vector.
 		 *
 		 */
+		// void compCamPos()
+		// {
+		// 	cv::Mat R = toRotMatrix(rquat).inv();
+		// 	camPos = -R * tvec; 
+		// }
 		void compCamPos()
 		{
-			cv::Mat R = toRotMatrix(rquat).inv();
+			cv::Rodrigues(rvec, rmat); 
+
+			cv::Mat R = rmat.t();
+
+			cv::Mat tmp;
+			cv::Rodrigues(-R, tmp);
+
+			cv::Vec3d upVec(0,0,1);
+			std::cout << R * upVec << std::endl;
+//https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
+			
+
 			camPos = -R * tvec; 
 		}
 
