@@ -100,7 +100,7 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
     }
 
     int n_frames = container.getFrameCount();
-    
+
     for(int frame=0; frame<n_frames; frame++){
         std::cout << frame << " / " << n_frames << std::endl;
 
@@ -112,25 +112,46 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
 
         std::vector<int> processedPaths;
         std::vector<Combination> usedCombinations;
+
         // First process all paths with some existing points
-        for(int n_path; n_path<triangulatedPoints.size(); n_path++){
+        for(int n_path=0; n_path<triangulatedPoints.size(); n_path++){
             const std::vector<cv::Point3d>& currPath = triangulatedPoints[n_path];
             // TODO We maybe can get last valid pos from path to speed up algo
-            if(currPath.size() != 0 && currPath.back() != cv::Point3d({0,0,0})){
+            if(currPath.size() == 0) continue;
+
+            if(currPath.size() != 0 && currPath.back() != cv::Point3d(0,0,0)){
                 processedPaths.push_back(n_path);
                 Combination bestPointForPath = triangulateWithLastPos(currPath.back(), container, usedCombinations, frame);
-
+                if(bestPointForPath.combination_.size() > 0) // If combination was found, add it to used combinations
+                    usedCombinations.push_back(bestPointForPath);
+                triangulatedPoints[n_path].push_back(bestPointForPath.point); // Add point to path
             }
         }
 
-        std::vector<Combination> finalCombinations = pickBestCombinations(container, frame);
+        if(processedPaths.size() == triangulatedPoints.size()) continue;
+
+        // Create container with not used detections
+        DetectionsContainer tmpContainer(container.getCamCount());
+        tmpContainer.addEmptyFrame();
+
+        for(int cam=0; cam<container.getCamCount(); cam++){
+            for(int det=0; det<container.detCountForCam(cam, frame); det++){
+                if(!isDetectionInCombinations(det, cam, usedCombinations)){
+                    tmpContainer.addDetectionToCamera(container.getRecord(cam, frame, det), cam);
+                }
+            }
+        }
+
+        std::vector<Combination> finalCombinations = pickBestCombinations(tmpContainer, 0, triangulatedPoints.size() - processedPaths.size());
 
         // Classify every new point to path
-        std::vector<CombinationPath> combinationPathVec; // Tuple -> combination, path, error
+        std::vector<CombinationPath> combinationPathVec;
         for(int i=0; i<finalCombinations.size(); i++){
             size_t bestPath = 0;
             double bestDist = -1;
             for(int j=0; j<n_drones; j++){
+                if(std::find(processedPaths.begin(), processedPaths.end(), j) != processedPaths.end()) continue;
+
                 // Calculate average error from tail of each path
                 int nPointsToCheck = std::min(triangulatedPoints[j].size(), (size_t)PATH_TAIL);
                 if(nPointsToCheck == 0) continue;
@@ -152,10 +173,9 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
         
         std::sort(combinationPathVec.begin(), combinationPathVec.end(), greater<CombinationPath>());
 
-        std::vector<size_t> usedPaths;
         for(const auto& c : combinationPathVec){
             // If best path is taken or closest path is a path that doesn't exists
-            if(std::find(usedPaths.begin(), usedPaths.end(), c.path) != usedPaths.end()){
+            if(std::find(processedPaths.begin(), processedPaths.end(), c.path) != processedPaths.end()){
                 int emptyPath = -1;
                 for(int i=0; i < triangulatedPoints.size(); i++){
                     if(triangulatedPoints[i].empty()){
@@ -170,12 +190,12 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
             };
 
             triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
-            usedPaths.push_back(c.path);
+            processedPaths.push_back(c.path);
         }
 
         // Add point [0,0,0] to unused paths to keep frame count
         for(int i=0; i<n_drones; i++){
-            if(std::find(usedPaths.begin(), usedPaths.end(), i) == usedPaths.end()){
+            if(std::find(processedPaths.begin(), processedPaths.end(), i) == processedPaths.end()){
                 emptyFrames[i].push_back(frame);
             }
         }
@@ -189,11 +209,9 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
     }
 }
 
-std::vector<DroneClassifier::Combination> DroneClassifier::pickBestCombinations(const DetectionsContainer& container, int frame){
+void DroneClassifier::fillCombinationQueue(const DetectionsContainer& container, int frame, std::priority_queue<Combination>& pq){
     std::vector<int> n_detections = container.getDetectionsCount(frame);
-    
     Iterator iterator(n_detections);
-    std::priority_queue<Combination> combinationsQueue;
 
     while(iterator.increment()){
         std::vector<int> combination = iterator.getCombination();
@@ -222,13 +240,19 @@ std::vector<DroneClassifier::Combination> DroneClassifier::pickBestCombinations(
                 std::count_if(combination.begin(), combination.end(), [&](int &i) {
                     return i > 0;
                 }) >= MIN_CAMERAS){
-            combinationsQueue.push({combination, pointWithError.first, pointWithError.second});
+            pq.push({combination, pointWithError.first, pointWithError.second});
         }
     }
+}
+
+
+std::vector<DroneClassifier::Combination> DroneClassifier::pickBestCombinations(const DetectionsContainer& container, int frame, int detectionsNeeded){
+    std::priority_queue<Combination> combinationsQueue;
+    fillCombinationQueue(container, frame, combinationsQueue);
 
     // Pick n_drones best combinations
     std::vector<Combination> finalCombinations;
-    while(!combinationsQueue.empty() && finalCombinations.size() < n_drones_){
+    while(!combinationsQueue.empty() && finalCombinations.size() < detectionsNeeded){
         Combination c = combinationsQueue.top();
         if(c.isCombinationUnique(finalCombinations)) finalCombinations.push_back(c);
         combinationsQueue.pop();
@@ -238,22 +262,38 @@ std::vector<DroneClassifier::Combination> DroneClassifier::pickBestCombinations(
 }
 
 DroneClassifier::Combination DroneClassifier::triangulateWithLastPos(cv::Point3d pos, const DetectionsContainer& container, std::vector<Combination> usedCombinations, int frame){
-    std::vector<std::vector<int>> validDetections(container.getCamCount());
-
-    std::vector<int> n_detections = container.getDetectionsCount(frame);
+    // Create empty container that will later have only one frame with valid detections
+    DetectionsContainer tmpContainer(container.getCamCount());
+    tmpContainer.addEmptyFrame();
 
     // Get detections that are relativly close to the last pos in path
     for(int cam=0; cam<container.getCamCount(); cam++){
-        for(int det=0; det<n_detections[cam]; det++){
+        for(int det=0; det<container.detCountForCam(cam, frame); det++){
             if(Triangulator::getDistFromRay({triangulator_->getCamera(cam), container.getRecord(cam, frame, det)}, pos) < MAX_STEP){
-                validDetections[cam].push_back(det);
+                tmpContainer.addDetectionToCamera(container.getRecord(cam, frame, det), cam);
             }
         }
     }
 
+    std::priority_queue<Combination> combinationsQueue;
+    fillCombinationQueue(tmpContainer, 0, combinationsQueue);
+
+    while(!combinationsQueue.empty()){
+        Combination c = combinationsQueue.top();
+        if(c.isCombinationUnique(usedCombinations) && c.error < error_) return c;
+        combinationsQueue.pop();
+    }
     
+    return {{}, {0,0,0}};
 }
 
-
+bool DroneClassifier::isDetectionInCombinations(int cam, int det, const std::vector<Combination>& combinations){
+    for(const auto& c : combinations){
+        for(int cam=0; cam<c.combination_.size(); cam++){
+            if(cam==cam && c.combination_[cam]==det) return true;
+        }
+    }
+    return false;
+}
 
 

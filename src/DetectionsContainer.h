@@ -11,6 +11,7 @@ typedef std::vector<Detections> Cameras;
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
 class DetectionsContainer{
+public:
     int n_frames, n_cameras;
 
     std::vector<Cameras> data;
@@ -31,6 +32,8 @@ public:
      */
     DetectionsContainer(const char* path, int offset, int recordSize, int startFrame=0, int endFrame=0);
 
+    DetectionsContainer(int camCount);
+
     std::vector<Detections> getFrame(int i) const;
 
     int getFrameCount() const;
@@ -39,5 +42,11 @@ public:
 
     std::vector<int> getDetectionsCount(int frame) const;
 
+    int detCountForCam(int cam, int frame) const;
+
     cv::Point2d getRecord(int camera, int frame, int detection) const;
+
+    void addEmptyFrame();
+
+    void addDetectionToCamera(cv::Point2d det, int cam);
 };

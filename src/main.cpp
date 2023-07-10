@@ -53,7 +53,7 @@ int main(int argc, const char** argv){
 
         DroneClassifier classifier(triangulator, n_drones);
 
-        DetectionsContainer container(args.get("data_path").c_str(), 1, 7);
+        DetectionsContainer container(args.get("data_path").c_str(), 1, 7, 0, 2000);
 
         auto start = std::chrono::high_resolution_clock::now();
 

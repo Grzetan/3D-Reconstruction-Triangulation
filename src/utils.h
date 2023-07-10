@@ -6,6 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include "pugixml.hpp"
 #include "Camera.h"
+#include "DroneClassifier.h"
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 

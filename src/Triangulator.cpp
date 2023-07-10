@@ -1,12 +1,12 @@
 #include "Triangulator.h"
 
-double Triangulator::distToRay(const Ray& r, const cv::Vec3d& p, bool squared=false){
+double Triangulator::distToRay(const Ray& r, const cv::Vec3d& p, bool squared){
     cv::Point3d result = r.dir.cross(p - cv::Vec3d(r.origin));
     if(squared) return result.x*result.x + result.y*result.y + result.z*result.z;
     return std::sqrt(result.x*result.x + result.y*result.y + result.z*result.z);
 }
 
-double Triangulator::distToRay_(const Ray& r, const cv::Vec3d p, bool squared=false){
+double Triangulator::distToRay_(const Ray& r, const cv::Vec3d p, bool squared){
     return distToRay(r, p, squared);
 }
 

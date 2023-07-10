@@ -5,6 +5,14 @@ DetectionsContainer::DetectionsContainer(const char* path, int offset, int recor
     readFiles(files, offset, recordSize, startFrame, endFrame);
 }
 
+DetectionsContainer::DetectionsContainer(int camCount){
+    n_cameras = camCount;
+
+    for(int i=0; i<camCount; i++){
+        data.push_back({});
+    }
+}
+
 void DetectionsContainer::readFiles(const std::vector<std::string>& files, int offset, int recordSize, int startFrame, int endFrame){
     std::string line, token;
 
@@ -102,3 +110,19 @@ std::vector<int> DetectionsContainer::getDetectionsCount(int frame) const{
 cv::Point2d DetectionsContainer::getRecord(int camera, int frame, int detection) const{
     return data[camera][frame][detection];
 }
+
+void DetectionsContainer::addEmptyFrame(){
+    for(int i=0; i<n_cameras; i++){
+        data[i].push_back({});
+    }
+}
+
+void DetectionsContainer::addDetectionToCamera(cv::Point2d det, int cam){
+    data[cam].back().push_back(det);
+}
+
+int DetectionsContainer::detCountForCam(int cam, int frame) const{
+    return data[cam][frame].size();
+}
+
+
