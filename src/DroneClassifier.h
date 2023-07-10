@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <opencv2/opencv.hpp>
 #include "Triangulator.h"
+#include "DetectionsContainer.h"
 
 # define MAX_ERROR_MATRIX 1e+5//120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
 # define MAX_ERROR_RAY 120
@@ -13,22 +14,9 @@
 class DroneClassifier{
 private:
     Triangulator* triangulator_;
+    size_t n_drones_;
 
     double error_;
-
-    class Iterator{
-        std::vector<int> combination_;
-        bool skipNext = false;
-        const std::vector<int> sizes_;
-    public:
-        Iterator(std::vector<int> sizes);
-
-        bool increment();
-
-        bool cut();
-
-        std::vector<int> getCombination();
-    };
 
     struct Combination {
         std::vector<int> combination_;
@@ -50,8 +38,24 @@ private:
         bool operator > (const CombinationPath& elem) const;
     };
 
-public:
-    DroneClassifier(Triangulator* triangulator);
+    class Iterator{
+        std::vector<int> combination_;
+        bool skipNext = false;
+        const std::vector<int> sizes_;
+    public:
+        Iterator(std::vector<int> sizes);
 
-	void classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones);
+        bool increment();
+
+        bool cut();
+
+        std::vector<int> getCombination();
+    };
+
+    std::vector<Combination> pickBestCombinations(std::vector<int> n_detections, const std::vector<std::vector<std::vector<cv::Point2d>>>& points);
+
+public:
+    DroneClassifier(Triangulator* triangulator, size_t n_drones);
+
+	void classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones);
 };

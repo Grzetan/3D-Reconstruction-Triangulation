@@ -40,62 +40,6 @@ void loadPointsOneDrone(const char* path, std::vector<std::vector<cv::Point2d>>&
     }
 }
 
-void loadPointsMultipleDrones(const char* path, std::vector<std::vector<std::vector<cv::Point2d>>>& points, int offset, int recordSize, int startFrame, int endFrame){
-    std::vector<std::string> files;
-    for (const auto& dirEntry : recursive_directory_iterator(path)){
-        std::string directory = dirEntry.path().u8string();
-        if(directory.find(".csv") != std::string::npos && directory.find(".avi") == std::string::npos){
-            files.push_back(directory);
-        }
-    }
-
-    std::sort(files.begin(), files.end());
-    std::string line, token;
-
-    for(auto& f : files){
-        int n_line=0, frame=-1;
-        std::ifstream file(f);
-        points.push_back({}); // Add new vector for current camera
-
-        while (std::getline(file, line)){
-            if(offset > n_line++) continue; // Skip first `offset` lines
-            std::istringstream iss(line);
-            std::vector<int> seperatedLine;
-
-            while(std::getline(iss, token, ',')) {
-                seperatedLine.push_back(std::stoi(token));
-            }
-
-            if((seperatedLine[0] <= startFrame || seperatedLine[0] > endFrame) && startFrame != endFrame){
-                frame = seperatedLine[0];
-                continue;
-            };
-            
-            for(int i=0; i<seperatedLine[0]-frame-1; i++){
-                points.back().push_back({});
-            }
-            frame = seperatedLine[0];
-
-            if((seperatedLine.size() - 1) % recordSize != 0)
-                throw std::runtime_error("Invalid CSV file!");
-
-            points.back().push_back({}); // Add vector for new frame
-
-            for(int j=0; j<seperatedLine.size() / recordSize; j++){
-                cv::Point2d point;
-                point.x = seperatedLine[j*recordSize+5]; 
-                point.y = seperatedLine[j*recordSize+6];
-                points.back().back().push_back(point);
-            }
-        }
-    }
-
-    for(int i=1; i<points.size(); i++){
-        if(points[i-1].size() != points[i].size())
-            throw std::runtime_error("Number of frames on all cameras must be the same");
-    }
-}
-
 std::vector<const tdr::Camera*> loadCamerasXML(const char* path){
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(path);

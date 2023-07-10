@@ -5,6 +5,7 @@
 #include "RayTriangulator.h"
 #include "MatrixTriangulator.h"
 #include "DroneClassifier.h"
+#include "DetectionsContainer.h"
 #include "utils.h"
 
 int main(int argc, const char** argv){
@@ -50,15 +51,14 @@ int main(int argc, const char** argv){
             throw std::runtime_error("Invalid --triangulator argument. Allowed options are \'matrix\' and \'ray\'");
         }
 
-        DroneClassifier classifier(triangulator);
+        DroneClassifier classifier(triangulator, n_drones);
 
-        std::vector<std::vector<std::vector<cv::Point2d>>> dronePoints;
-        loadPointsMultipleDrones(args.get("data_path").c_str(), dronePoints, 1, 7);
+        DetectionsContainer container(args.get("data_path").c_str(), 1, 7);
 
         auto start = std::chrono::high_resolution_clock::now();
 
         std::vector<std::vector<cv::Point3d>> triangulatedPoints;
-        classifier.classifyDrones(dronePoints, triangulatedPoints, n_drones);
+        classifier.classifyDrones(container, triangulatedPoints, n_drones);
 
         auto stop = std::chrono::high_resolution_clock::now();
     

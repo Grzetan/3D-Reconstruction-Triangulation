@@ -15,6 +15,8 @@ set(SOURCE_FILES
     ${PATH}/RayTriangulator.cpp
     ${PATH}/DroneClassifier.h
     ${PATH}/DroneClassifier.cpp
+    ${PATH}/DetectionsContainer.h
+    ${PATH}/DetectionsContainer.cpp
     ${PATH}/utils.h
     ${PATH}/utils.cpp
     ${PATH}/argparse.hpp

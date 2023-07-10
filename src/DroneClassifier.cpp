@@ -1,6 +1,6 @@
 #include "DroneClassifier.h"
 
-DroneClassifier::DroneClassifier(Triangulator* triangulator) : triangulator_(triangulator){
+DroneClassifier::DroneClassifier(Triangulator* triangulator, size_t n_drones) : triangulator_(triangulator), n_drones_(n_drones){
     if(triangulator->getType() == "matrix"){
         error_ = MAX_ERROR_MATRIX;
     }else if(triangulator->getType() == "ray"){
@@ -90,7 +90,7 @@ bool DroneClassifier::CombinationPath::operator>(const CombinationPath& elem) co
     return (error < elem.error);
 }
 
-void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<cv::Point2d>>>& points, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones){
+void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones){
     std::vector<std::vector<int>> emptyFrames;
 
     // Add new vector for every drone
@@ -98,13 +98,36 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
         triangulatedPoints.push_back({});
         emptyFrames.push_back({});
     }
+
+    int n_frames = container.getFrameCount();
     
-    for(int frame=0; frame<points[0].size(); frame++){
-        std::cout << frame << " / " << points[0].size() << std::endl;
-        std::vector<int> n_detections(points.size());
-        for(int i=0; i<points.size(); i++){
-            n_detections[i] = points[i][frame].size() + 1; // Plus one for no detection
-        }
+    for(int frame=0; frame<n_frames; frame++){
+        std::cout << frame << " / " << n_frames << std::endl;
+        std::vector<int> n_detections = container.getDetectionsCount(frame);
+        
+        // // // 1. for every path (drone) get the last position (Do path that do have a last pos first).
+        // // // 1.1. If last pos doesnt exist, use the old algorithm with all combinations and cutting.
+        // // // 2. For every camera get only these rays that are close to last pos. 
+        // // // 3. once again apply algorithm with combinations and cutting but only for classified rays.
+        // // // 4. Add first unique, valid path to detections
+
+        // std::vector<int> processedPaths;
+        // std::vector<Combination> usedCombinations;
+        // // First process all paths with some existing points
+        // for(int n_path; n_path<triangulatedPoints.size(); n_path++){
+        //     const std::vector<cv::Point3d>& currPath = triangulatedPoints[n_path];
+        //     // TODO We maybe can get last valid pos from path to speed up algo
+        //     if(currPath.size() != 0 && currPath.back() != cv::Point3d({0,0,0})){
+        //         processedPaths.push_back(n_path);
+        //         // use new algo
+        //     }
+        // }
+        // // Process paths with no last point
+        // for(int n_path; n_path<triangulatedPoints.size(); n_path++){
+        //     if(std::find(processedPaths.begin(), processedPaths.end(), n_path) != processedPaths.end()) continue;
+
+
+        // }
 
         Iterator iterator(n_detections);
         std::priority_queue<Combination> combinationsQueue;
@@ -122,7 +145,7 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
             std::vector<Triangulator::CamPointPair> images;
             for(int i=0; i<combination.size(); i++){
                 if(combination[i] <= 0) continue; // Index 0 or -1 means no detection or camera isn't taken into account so we can skip it
-                images.push_back({triangulator_->getCameras()[i], points[i][frame][combination[i]-1]});
+                images.push_back({triangulator_->getCameras()[i], container.getRecord(i, frame, combination[i]-1)});
             }
 
             std::pair<cv::Point3d, double> pointWithError = triangulator_->triangulatePoint(images);
@@ -211,4 +234,5 @@ void DroneClassifier::classifyDrones(const std::vector<std::vector<std::vector<c
         }
     }
 }
+
 
