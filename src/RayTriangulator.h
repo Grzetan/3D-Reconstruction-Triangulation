@@ -10,11 +10,6 @@
 # define SQUARED false
 
 class RayTriangulator : public Triangulator{
-    struct Ray {
-        cv::Point3d origin;
-        cv::Point3d dir;
-    };
-
     class RayClosestPoint : public cv::LMSolver::Callback {
     public:
         explicit RayClosestPoint(const std::vector<Ray>& rays, const double epsilon=THRESHOLD, const bool squared=SQUARED) : rays_(rays), epsilon_(epsilon), squared_(squared) {}
@@ -28,20 +23,7 @@ class RayTriangulator : public Triangulator{
         const double epsilon_;
         const bool squared_;
         mutable double error;
-
-        static double distToRay(const Ray& r, const cv::Vec3d& p, bool squared=false);
-
-        static double distToRay_(const Ray& r, const cv::Vec3d p, bool squared=false);
     };
-
-    cv::Vec3d rotatePointByQuaternion(cv::Vec3d point, const cv::Mat quat);
-
-    // https://computergraphics.stackexchange.com/questions/8479/how-to-calculate-ray
-    cv::Vec3d calculateRayDirectionForPixel(const tdr::Camera* cam, const cv::Point2d& point);
-
-    Ray createRayForPoint(const tdr::Camera* cam, const cv::Point2d& point);
-
-    bool increment(std::vector<size_t>& combination, std::vector<size_t>& sizes);
 
 public:
 	RayTriangulator(std::vector<const tdr::Camera*> cameras_);
@@ -49,5 +31,4 @@ public:
 	std::vector<cv::Point3d> triangulatePoints(std::vector<std::vector<cv::Point2d>> points) override;
 
     std::pair<cv::Point3d, double> triangulatePoint(std::vector<CamPointPair> images) override;
-      
 };

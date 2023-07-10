@@ -8,6 +8,7 @@
 
 # define MAX_ERROR_MATRIX 1e+5//120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
 # define MAX_ERROR_RAY 120
+# define MAX_STEP 15 // Max difference between drone positions between frames
 # define MIN_CAMERAS 3 // Minimum number of cameras for valid combination
 # define PATH_TAIL 3 // Length of path tail. Used in classyfing drones to paths
 
@@ -52,7 +53,9 @@ private:
         std::vector<int> getCombination();
     };
 
-    std::vector<Combination> pickBestCombinations(std::vector<int> n_detections, const std::vector<std::vector<std::vector<cv::Point2d>>>& points);
+    std::vector<Combination> pickBestCombinations(const DetectionsContainer& container, int frame);
+
+    Combination triangulateWithLastPos(cv::Point3d pos, const DetectionsContainer& container, std::vector<Combination> usedCombinations, int frame);
 
 public:
     DroneClassifier(Triangulator* triangulator, size_t n_drones);

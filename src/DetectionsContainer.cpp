@@ -72,8 +72,8 @@ std::vector<std::string> DetectionsContainer::getFiles(const char* path){
     return files;
 }
 
-std::vector<Frames> DetectionsContainer::getFrame(int i) const{
-    std::vector<Frames> frame;
+std::vector<Detections> DetectionsContainer::getFrame(int i) const{
+    std::vector<Detections> frame;
     for(int j=0; j<data.size(); j++){
         frame.push_back(data[j][i]);
     }
@@ -84,6 +84,11 @@ std::vector<Frames> DetectionsContainer::getFrame(int i) const{
 int DetectionsContainer::getFrameCount() const{
     return n_frames;
 }
+
+int DetectionsContainer::getCamCount() const{
+    return n_cameras;
+}
+
 
 std::vector<int> DetectionsContainer::getDetectionsCount(int frame) const{
     std::vector<int> n_detections(n_cameras);

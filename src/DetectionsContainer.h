@@ -5,8 +5,8 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
-typedef std::vector<cv::Point2d> Frames;
-typedef std::vector<Frames> Cameras;
+typedef std::vector<cv::Point2d> Detections;
+typedef std::vector<Detections> Cameras;
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
@@ -31,9 +31,11 @@ public:
      */
     DetectionsContainer(const char* path, int offset, int recordSize, int startFrame=0, int endFrame=0);
 
-    std::vector<Frames> getFrame(int i) const;
+    std::vector<Detections> getFrame(int i) const;
 
     int getFrameCount() const;
+
+    int getCamCount() const;
 
     std::vector<int> getDetectionsCount(int frame) const;
 
