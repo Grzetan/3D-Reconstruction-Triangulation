@@ -116,17 +116,17 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
             if(currPath.size() == 0 || true) continue;
 
             if(currPath.size() != 0 && currPath.back() != cv::Point3d(0,0,0)){
-                processedPaths.push_back(n_path);
                 Combination bestPointForPath = triangulateWithLastPos(currPath.back(), container, usedCombinations, frame);
-                if(bestPointForPath.combination_.size() > 0) // If combination was found, add it to used combinations
+                if(bestPointForPath.combination_.size() > 0){ // If combination was found, add it to used combinations
+                    processedPaths.push_back(n_path);
                     usedCombinations.push_back(bestPointForPath);
-                triangulatedPoints[n_path].push_back(bestPointForPath.point); // Add point to path
+                    triangulatedPoints[n_path].push_back(bestPointForPath.point); // Add point to path
+                }
             }
         }
 
         if(processedPaths.size() == triangulatedPoints.size()) continue;
 
-        std::cout << "OLD ALGO" << std::endl;
         // Create container with not used detections
         DetectionsContainer tmpContainer(container.getCamCount());
         tmpContainer.addEmptyFrame();
@@ -183,7 +183,7 @@ void DroneClassifier::fillCombinationQueue(const DetectionsContainer& container,
                 std::count_if(combination.begin(), combination.end(), [&](int &i) {
                     return i > 0;
                 }) >= MIN_CAMERAS){
-            pq.push({combination, pointWithError.first, pointWithError.second});
+            pq.push({container.getOriginalCombination(combination, frame), pointWithError.first, pointWithError.second});
         }
     }
 }
@@ -206,15 +206,15 @@ std::vector<DroneClassifier::Combination> DroneClassifier::pickBestCombinations(
 
 DroneClassifier::Combination DroneClassifier::triangulateWithLastPos(cv::Point3d pos, const DetectionsContainer& container, std::vector<Combination> usedCombinations, int frame){
     // Create empty container that will later have only one frame with valid detections
-    DetectionsContainer tmpContainer(container.getCamCount());
+    DetectionsContainer tmpContainer(container.getCamCount(), true);
     tmpContainer.addEmptyFrame();
 
     // Get detections that are relativly close to the last pos in path
     for(int cam=0; cam<container.getCamCount(); cam++){
         for(int det=0; det<container.detCountForCam(cam, frame); det++){
             cv::Point2d record = container.getRecord(cam, frame, det);
-            if(Triangulator::getDistFromRay({triangulator_->getCamera(cam), record}, pos) < 20){
-                tmpContainer.addDetectionToCamera(record, cam);
+            if(Triangulator::getDistFromRay({triangulator_->getCamera(cam), record}, pos) < MAX_STEP){
+                tmpContainer.addDetectionToCamera(record, cam, det);
             }
         }
     }

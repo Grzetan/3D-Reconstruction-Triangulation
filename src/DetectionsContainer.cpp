@@ -5,11 +5,12 @@ DetectionsContainer::DetectionsContainer(const char* path, int offset, int recor
     readFiles(files, offset, recordSize, startFrame, endFrame);
 }
 
-DetectionsContainer::DetectionsContainer(int camCount){
+DetectionsContainer::DetectionsContainer(int camCount, bool useOffset){
     n_cameras = camCount;
 
     for(int i=0; i<camCount; i++){
         data.push_back({});
+        if(useOffset) offsetVector.push_back({});
     }
 }
 
@@ -114,15 +115,33 @@ cv::Point2d DetectionsContainer::getRecord(int camera, int frame, int detection)
 void DetectionsContainer::addEmptyFrame(){
     for(int i=0; i<n_cameras; i++){
         data[i].push_back({});
+        if(offsetVector.size() > 0){
+            offsetVector[i].push_back({});
+            offsetVector[i].back()[0] = 0; // Index=0 means no detection and it doesnt change
+        }
     }
 }
 
-void DetectionsContainer::addDetectionToCamera(cv::Point2d det, int cam){
+void DetectionsContainer::addDetectionToCamera(cv::Point2d det, int cam, int originalIndex){
     data[cam].back().push_back(det);
+    if(originalIndex > -1 && offsetVector.size() > 0) offsetVector[cam].back()[data[cam].back().size()] = originalIndex+1; // +1 becouse index=0 means no detection so all detections will be shifted
 }
 
 int DetectionsContainer::detCountForCam(int cam, int frame) const{
     return data[cam][frame].size();
 }
+
+std::vector<int> DetectionsContainer::getOriginalCombination(const std::vector<int>& combination, int frame) const{
+    if(offsetVector.size() == 0) return combination; // If there is no offset vector the combination stays as it is
+    
+    std::vector<int> original;
+
+    for(int i=0; i<combination.size(); i++){
+        original.push_back(offsetVector[i][frame].at(combination[i]));
+    }
+
+    return original;
+}
+
 
 

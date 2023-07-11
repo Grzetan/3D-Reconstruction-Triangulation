@@ -7,8 +7,8 @@
 #include "DetectionsContainer.h"
 #include "utils.h"
 
-# define MAX_ERROR_MATRIX 1e+5//120 // This value can be different for different errors used in solver. For now it's 70 which means 7cm which is more or less drone size
-# define MAX_ERROR_RAY 120
+# define MAX_ERROR_MATRIX 1e+5 // Max error for matrix triangulator
+# define MAX_ERROR_RAY 120 // Max error for ray triangulator
 # define MAX_STEP 100 // Max difference between drone positions between frames
 # define MIN_CAMERAS 3 // Minimum number of cameras for valid combination
 # define PATH_TAIL 3 // Length of path tail. Used in classyfing drones to paths

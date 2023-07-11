@@ -3,6 +3,7 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <opencv2/opencv.hpp>
 
 typedef std::vector<cv::Point2d> Detections;
@@ -15,6 +16,11 @@ public:
     int n_frames, n_cameras;
 
     std::vector<Cameras> data;
+
+    /*
+        This is an optional variable that can be used to keep original detection indices when creating temporaty container
+    */
+    std::vector<std::vector<std::map<int, int>>> offsetVector;
 
     std::vector<std::string> getFiles(const char* path);
 
@@ -32,7 +38,7 @@ public:
      */
     DetectionsContainer(const char* path, int offset, int recordSize, int startFrame=0, int endFrame=0);
 
-    DetectionsContainer(int camCount);
+    DetectionsContainer(int camCount, bool useOffset=false);
 
     std::vector<Detections> getFrame(int i) const;
 
@@ -48,5 +54,7 @@ public:
 
     void addEmptyFrame();
 
-    void addDetectionToCamera(cv::Point2d det, int cam);
+    void addDetectionToCamera(cv::Point2d det, int cam, int originalIndex=-1);
+
+    std::vector<int> getOriginalCombination(const std::vector<int>& combination, int frame) const;
 };
