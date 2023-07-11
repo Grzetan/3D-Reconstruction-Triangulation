@@ -91,24 +91,15 @@ bool DroneClassifier::CombinationPath::operator>(const CombinationPath& elem) co
 }
 
 void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones){
-    std::vector<std::vector<int>> emptyFrames;
-
     // Add new vector for every drone
     for(int i=0; i<n_drones; i++){
         triangulatedPoints.push_back({});
-        emptyFrames.push_back({});
     }
 
     int n_frames = container.getFrameCount();
 
     for(int frame=0; frame<n_frames; frame++){
         std::cout << frame << " / " << n_frames << std::endl;
-
-        // // // 1. for every path (drone) get the last position (Do path that do have a last pos first).
-        // // // 1.1. If last pos doesnt exist, use the old algorithm with all combinations and cutting.
-        // // // 2. For every camera get only these rays that are close to last pos. 
-        // // // 3. once again apply algorithm with combinations and cutting but only for classified rays.
-        // // // 4. Add first unique, valid path to detections
 
         std::vector<int> processedPaths;
         std::vector<Combination> usedCombinations;
@@ -117,7 +108,7 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
         for(int n_path=0; n_path<triangulatedPoints.size(); n_path++){
             const std::vector<cv::Point3d>& currPath = triangulatedPoints[n_path];
             // TODO We maybe can get last valid pos from path to speed up algo
-            if(currPath.size() == 0) continue;
+            if(currPath.size() == 0 || true) continue;
 
             if(currPath.size() != 0 && currPath.back() != cv::Point3d(0,0,0)){
                 processedPaths.push_back(n_path);
@@ -130,6 +121,7 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
 
         if(processedPaths.size() == triangulatedPoints.size()) continue;
 
+        std::cout << "OLD ALGO" << std::endl;
         // Create container with not used detections
         DetectionsContainer tmpContainer(container.getCamCount());
         tmpContainer.addEmptyFrame();
@@ -185,26 +177,19 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
                 }
                 if(emptyPath != -1){
                     triangulatedPoints[emptyPath].push_back(finalCombinations[c.combination].point);
+                    processedPaths.push_back(emptyPath);
                 }
-                continue;
-            };
-
-            triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
-            processedPaths.push_back(c.path);
+            }else{
+                triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
+                processedPaths.push_back(c.path);
+            }
         }
 
         // Add point [0,0,0] to unused paths to keep frame count
         for(int i=0; i<n_drones; i++){
             if(std::find(processedPaths.begin(), processedPaths.end(), i) == processedPaths.end()){
-                emptyFrames[i].push_back(frame);
+                triangulatedPoints[i].push_back(cv::Point3d(0,0,0));
             }
-        }
-    }
-
-    // Add [0,0,0] to empty detections
-    for(int i=0; i<emptyFrames.size(); i++){
-        for(int j=0; j<emptyFrames[i].size(); j++){
-            triangulatedPoints[i].insert(triangulatedPoints[i].begin() + emptyFrames[i][j], cv::Point3d(0,0,0));
         }
     }
 }
@@ -269,11 +254,18 @@ DroneClassifier::Combination DroneClassifier::triangulateWithLastPos(cv::Point3d
     // Get detections that are relativly close to the last pos in path
     for(int cam=0; cam<container.getCamCount(); cam++){
         for(int det=0; det<container.detCountForCam(cam, frame); det++){
-            if(Triangulator::getDistFromRay({triangulator_->getCamera(cam), container.getRecord(cam, frame, det)}, pos) < MAX_STEP){
-                tmpContainer.addDetectionToCamera(container.getRecord(cam, frame, det), cam);
+            cv::Point2d record = container.getRecord(cam, frame, det);
+            if(Triangulator::getDistFromRay({triangulator_->getCamera(cam), record}, pos) < 20){
+                tmpContainer.addDetectionToCamera(record, cam);
             }
         }
     }
+
+    std::cout << "HALO: ";
+    for(const auto& i : tmpContainer.getDetectionsCount(0)){
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
 
     std::priority_queue<Combination> combinationsQueue;
     fillCombinationQueue(tmpContainer, 0, combinationsQueue);
