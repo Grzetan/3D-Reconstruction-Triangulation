@@ -90,10 +90,15 @@ bool DroneClassifier::CombinationPath::operator>(const CombinationPath& elem) co
     return (error < elem.error);
 }
 
-void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones){
+void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints){
+    // Create vector of empty frames on each camera to later add [0,0,0] to keep frame count
+    // We can't add this point during the algo becouse it would interfere with path classification
+    std::vector<std::vector<int>> emptyFrames;
+
     // Add new vector for every drone
-    for(int i=0; i<n_drones; i++){
+    for(int i=0; i<n_drones_; i++){
         triangulatedPoints.push_back({});
+        emptyFrames.push_back({});
     }
 
     int n_frames = container.getFrameCount();
@@ -136,60 +141,13 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
 
         std::vector<Combination> finalCombinations = pickBestCombinations(tmpContainer, 0, triangulatedPoints.size() - processedPaths.size());
 
-        // Classify every new point to path
-        std::vector<CombinationPath> combinationPathVec;
-        for(int i=0; i<finalCombinations.size(); i++){
-            size_t bestPath = 0;
-            double bestDist = -1;
-            for(int j=0; j<n_drones; j++){
-                if(std::find(processedPaths.begin(), processedPaths.end(), j) != processedPaths.end()) continue;
+        classifyPaths(finalCombinations, triangulatedPoints, processedPaths, emptyFrames, frame);
+    }
 
-                // Calculate average error from tail of each path
-                int nPointsToCheck = std::min(triangulatedPoints[j].size(), (size_t)PATH_TAIL);
-                if(nPointsToCheck == 0) continue;
-
-                double dist = 0;
-                for(int tail = triangulatedPoints[j].size() - nPointsToCheck; tail<triangulatedPoints[j].size(); tail++){
-                    dist += cv::norm(triangulatedPoints[j][tail] - finalCombinations[i].point);
-                }
-                dist /= (double) nPointsToCheck;
-
-                if(dist < bestDist || bestDist == -1){
-                    bestDist = dist;
-                    bestPath = j;
-                }
-            }
-
-            combinationPathVec.push_back({(size_t)i, bestPath, bestDist});
-        }
-        
-        std::sort(combinationPathVec.begin(), combinationPathVec.end(), greater<CombinationPath>());
-
-        for(const auto& c : combinationPathVec){
-            // If best path is taken or closest path is a path that doesn't exists
-            if(std::find(processedPaths.begin(), processedPaths.end(), c.path) != processedPaths.end()){
-                int emptyPath = -1;
-                for(int i=0; i < triangulatedPoints.size(); i++){
-                    if(triangulatedPoints[i].empty()){
-                        emptyPath = i;
-                        break;
-                    }
-                }
-                if(emptyPath != -1){
-                    triangulatedPoints[emptyPath].push_back(finalCombinations[c.combination].point);
-                    processedPaths.push_back(emptyPath);
-                }
-            }else{
-                triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
-                processedPaths.push_back(c.path);
-            }
-        }
-
-        // Add point [0,0,0] to unused paths to keep frame count
-        for(int i=0; i<n_drones; i++){
-            if(std::find(processedPaths.begin(), processedPaths.end(), i) == processedPaths.end()){
-                triangulatedPoints[i].push_back(cv::Point3d(0,0,0));
-            }
+    // Add [0,0,0] to empty detections
+    for(int i=0; i<emptyFrames.size(); i++){
+        for(int j=0; j<emptyFrames[i].size(); j++){
+            triangulatedPoints[i].insert(triangulatedPoints[i].begin() + emptyFrames[i][j], cv::Point3d(0,0,0));
         }
     }
 }
@@ -261,12 +219,6 @@ DroneClassifier::Combination DroneClassifier::triangulateWithLastPos(cv::Point3d
         }
     }
 
-    std::cout << "HALO: ";
-    for(const auto& i : tmpContainer.getDetectionsCount(0)){
-        std::cout << i << ", ";
-    }
-    std::cout << std::endl;
-
     std::priority_queue<Combination> combinationsQueue;
     fillCombinationQueue(tmpContainer, 0, combinationsQueue);
 
@@ -286,6 +238,64 @@ bool DroneClassifier::isDetectionInCombinations(int cam, int det, const std::vec
         }
     }
     return false;
+}
+
+void DroneClassifier::classifyPaths(const std::vector<Combination>& finalCombinations, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, std::vector<int>& processedPaths, std::vector<std::vector<int>>& emptyFrames, int frame){
+    // Classify every new point to path
+    std::vector<CombinationPath> combinationPathVec;
+    for(int i=0; i<finalCombinations.size(); i++){
+        size_t bestPath = 0;
+        double bestDist = -1;
+        for(int j=0; j<n_drones_; j++){
+            if(std::find(processedPaths.begin(), processedPaths.end(), j) != processedPaths.end()) continue;
+
+            // Calculate average error from tail of each path
+            int nPointsToCheck = std::min(triangulatedPoints[j].size(), (size_t)PATH_TAIL);
+            if(nPointsToCheck == 0) continue;
+
+            double dist = 0;
+            for(int tail = triangulatedPoints[j].size() - nPointsToCheck; tail<triangulatedPoints[j].size(); tail++){
+                dist += cv::norm(triangulatedPoints[j][tail] - finalCombinations[i].point);
+            }
+            dist /= (double) nPointsToCheck;
+
+            if(dist < bestDist || bestDist == -1){
+                bestDist = dist;
+                bestPath = j;
+            }
+        }
+
+        combinationPathVec.push_back({(size_t)i, bestPath, bestDist});
+    }
+    
+    std::sort(combinationPathVec.begin(), combinationPathVec.end(), greater<CombinationPath>());
+
+    for(const auto& c : combinationPathVec){
+        // If best path is taken or closest path is a path that doesn't exists
+        if(std::find(processedPaths.begin(), processedPaths.end(), c.path) != processedPaths.end()){
+            int emptyPath = -1;
+            for(int i=0; i < triangulatedPoints.size(); i++){
+                if(triangulatedPoints[i].empty()){
+                    emptyPath = i;
+                    break;
+                }
+            }
+            if(emptyPath != -1){
+                triangulatedPoints[emptyPath].push_back(finalCombinations[c.combination].point);
+                processedPaths.push_back(emptyPath);
+            }
+        }else{
+            triangulatedPoints[c.path].push_back(finalCombinations[c.combination].point);
+            processedPaths.push_back(c.path);
+        }
+    }
+
+    // Add point [0,0,0] to unused paths to keep frame count
+    for(int i=0; i<n_drones_; i++){
+        if(std::find(processedPaths.begin(), processedPaths.end(), i) == processedPaths.end()){
+            emptyFrames[i].push_back(frame);
+        }
+    }
 }
 
 

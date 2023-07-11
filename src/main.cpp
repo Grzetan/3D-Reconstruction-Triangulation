@@ -58,7 +58,7 @@ int main(int argc, const char** argv){
         auto start = std::chrono::high_resolution_clock::now();
 
         std::vector<std::vector<cv::Point3d>> triangulatedPoints;
-        classifier.classifyDrones(container, triangulatedPoints, n_drones);
+        classifier.classifyDrones(container, triangulatedPoints);
 
         auto stop = std::chrono::high_resolution_clock::now();
     

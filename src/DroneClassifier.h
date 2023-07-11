@@ -63,8 +63,14 @@ private:
 
     bool isDetectionInCombinations(int cam, int det, const std::vector<Combination>& combinations);
 
+    void classifyPaths(const std::vector<Combination>& finalCombinations,
+                       std::vector<std::vector<cv::Point3d>>& triangulatedPoints,
+                       std::vector<int>& processedPaths,
+                       std::vector<std::vector<int>>& emptyFrames, 
+                       int frame);
+
 public:
     DroneClassifier(Triangulator* triangulator, size_t n_drones);
 
-	void classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints, int n_drones);
+	void classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints);
 };
