@@ -28,7 +28,7 @@ bool DroneClassifier::Combination::operator>(const Combination& c) const {
     return error < c.error;
 }
 
-bool DroneClassifier::Combination::isCombinationUnique(std::vector<Combination>& combinations) {
+bool DroneClassifier::Combination::isCombinationUnique(const std::vector<Combination>& combinations) {
     for (const auto& comb : combinations) {
         for (int i = 0; i < combination_.size(); i++) {
             if (combination_[i] == comb.combination_[i] && combination_[i] != 0) return false;
@@ -113,7 +113,7 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
         for(int n_path=0; n_path<triangulatedPoints.size(); n_path++){
             const std::vector<cv::Point3d>& currPath = triangulatedPoints[n_path];
             // TODO We maybe can get last valid pos from path to speed up algo
-            if(currPath.size() == 0 || true) continue;
+            if(currPath.size() == 0) continue;
 
             if(currPath.size() != 0 && currPath.back() != cv::Point3d(0,0,0)){
                 Combination bestPointForPath = triangulateWithLastPos(currPath.back(), container, usedCombinations, frame);
@@ -127,20 +127,8 @@ void DroneClassifier::classifyDrones(const DetectionsContainer& container, std::
 
         if(processedPaths.size() == triangulatedPoints.size()) continue;
 
-        // Create container with not used detections
-        DetectionsContainer tmpContainer(container.getCamCount());
-        tmpContainer.addEmptyFrame();
-
-        for(int cam=0; cam<container.getCamCount(); cam++){
-            for(int det=0; det<container.detCountForCam(cam, frame); det++){
-                if(!isDetectionInCombinations(det, cam, usedCombinations)){
-                    tmpContainer.addDetectionToCamera(container.getRecord(cam, frame, det), cam);
-                }
-            }
-        }
-
-        std::vector<Combination> finalCombinations = pickBestCombinations(tmpContainer, 0, triangulatedPoints.size() - processedPaths.size());
-
+        // If new algorithm didn't work for all drones, use old algo
+        std::vector<Combination> finalCombinations = pickBestCombinations(container, frame, usedCombinations);
         classifyPaths(finalCombinations, triangulatedPoints, processedPaths, emptyFrames, frame);
     }
 
@@ -189,15 +177,15 @@ void DroneClassifier::fillCombinationQueue(const DetectionsContainer& container,
 }
 
 
-std::vector<DroneClassifier::Combination> DroneClassifier::pickBestCombinations(const DetectionsContainer& container, int frame, int detectionsNeeded){
+std::vector<DroneClassifier::Combination> DroneClassifier::pickBestCombinations(const DetectionsContainer& container, int frame, const std::vector<Combination>& usedCombinations){
     std::priority_queue<Combination> combinationsQueue;
     fillCombinationQueue(container, frame, combinationsQueue);
 
     // Pick n_drones best combinations
     std::vector<Combination> finalCombinations;
-    while(!combinationsQueue.empty() && finalCombinations.size() < detectionsNeeded){
+    while(!combinationsQueue.empty()){
         Combination c = combinationsQueue.top();
-        if(c.isCombinationUnique(finalCombinations)) finalCombinations.push_back(c);
+        if(c.isCombinationUnique(finalCombinations) && c.isCombinationUnique(usedCombinations) && c.error < error_) finalCombinations.push_back(c);
         combinationsQueue.pop();
     }
 
@@ -224,10 +212,11 @@ DroneClassifier::Combination DroneClassifier::triangulateWithLastPos(cv::Point3d
 
     while(!combinationsQueue.empty()){
         Combination c = combinationsQueue.top();
-        if(c.isCombinationUnique(usedCombinations) && c.error < error_) return c;
+        if(c.isCombinationUnique(usedCombinations) && c.error < error_ && cv::norm(c.point - pos) < MAX_STEP){
+            return c;
+        }
         combinationsQueue.pop();
     }
-    
     return {{}, {0,0,0}};
 }
 
