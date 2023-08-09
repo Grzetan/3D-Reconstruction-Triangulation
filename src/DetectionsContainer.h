@@ -56,5 +56,7 @@ public:
 
     void addDetectionToCamera(cv::Point2d det, int cam, int originalIndex=-1);
 
+    std::vector<std::vector<cv::Point2d>> getDataForTriangulation();
+
     std::vector<int> getOriginalCombination(const std::vector<int>& combination, int frame) const;
 };

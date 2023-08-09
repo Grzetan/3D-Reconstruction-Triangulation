@@ -27,8 +27,10 @@ void DetectionsContainer::readFiles(const std::vector<std::string>& files, int o
             std::istringstream iss(line);
             std::vector<int> seperatedLine;
 
-            while(std::getline(iss, token, ',')) {
-                seperatedLine.push_back(std::stoi(token));
+            while(std::getline(iss, token, ';')) {
+                if(token != ""){
+                    seperatedLine.push_back(std::stoi(token));
+                }
             }
 
             if((seperatedLine[0] <= startFrame || seperatedLine[0] > endFrame) && startFrame != endFrame){
@@ -129,6 +131,32 @@ void DetectionsContainer::addDetectionToCamera(cv::Point2d det, int cam, int ori
 
 int DetectionsContainer::detCountForCam(int cam, int frame) const{
     return data[cam][frame].size();
+}
+
+std::vector<std::vector<cv::Point2d>> DetectionsContainer::getDataForTriangulation(){
+    std::vector<std::vector<cv::Point2d>> result = {};
+
+    // Add vector for every camera
+    for(int i=0; i<n_cameras; i++){
+        result.push_back({});
+    }
+
+    for(int frame=0; frame < n_frames; frame++){
+        for(int cam=0; cam<n_cameras; cam++){
+            unsigned int size = data[cam][frame].size();
+
+            if(size > 1){
+                throw std::runtime_error("Function 'getDataForTriangulation' can be used only for one drone. Each frame can have max one detection");
+            }else if(size == 1){
+                result[cam].push_back(data[cam][frame][0]);
+            }else{
+                result[cam].push_back({-1,-1});
+            }
+        }
+    }
+
+
+    return result;
 }
 
 std::vector<int> DetectionsContainer::getOriginalCombination(const std::vector<int>& combination, int frame) const{

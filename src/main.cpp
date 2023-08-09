@@ -53,7 +53,7 @@ int main(int argc, const char** argv){
 
         DroneClassifier classifier(triangulator, n_drones);
 
-        DetectionsContainer container(args.get("data_path").c_str(), 1, 7, 0, 2000);
+        DetectionsContainer container(args.get("data_path").c_str(), 1, 7);
 
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -93,7 +93,7 @@ int main(int argc, const char** argv){
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
         std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
 
-        writeOutputFile("dron.ply", triangulatedPoints);
+        writeOutputFile("drone.ply", triangulatedPoints);
 
         delete triangulator;
     }
