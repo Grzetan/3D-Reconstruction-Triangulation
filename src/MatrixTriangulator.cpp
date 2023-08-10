@@ -57,7 +57,7 @@ std::vector<cv::Point3d> MatrixTriangulator::triangulatePoints(std::vector<std::
         int numberOfCameras = 0;
         std::vector<CamPointPair> frame{};
         for (int n_cam = 0; n_cam < min(points.size(), this->cameras.size()); n_cam++) {
-            if (!(points[n_cam][n_point].x == -1 || points[n_cam][n_point].y == -1)) numberOfCameras += 1;
+            if ((points[n_cam][n_point].x == -1 || points[n_cam][n_point].y == -1)) continue;
             frame.push_back(CamPointPair{ this->cameras[n_cam],points[n_cam][n_point] });
         }
 

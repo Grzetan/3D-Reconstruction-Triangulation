@@ -9,8 +9,8 @@
 
 # define MAX_ERROR_MATRIX 1e+5 // Max error for matrix triangulator
 # define MAX_ERROR_RAY 120 // Max error for ray triangulator
-# define MAX_STEP 200 // Max difference between drone positions between frames
-# define MIN_CAMERAS 3 // Minimum number of cameras for valid combination
+# define MAX_STEP 200 // Max difference between drone positions between frames (used in new algo)
+# define MIN_CAMERAS 2 // Minimum number of cameras for valid combination
 # define PATH_TAIL 3 // Length of path tail. Used in classyfing drones to paths
 
 class DroneClassifier{
