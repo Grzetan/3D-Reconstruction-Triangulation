@@ -33,11 +33,11 @@ int main(int argc, const char** argv){
     std::string path = args.get("path");
 
     // Generate detections from labels
-    if(false){
+    if(true){
         std::vector<std::string> files;
 
         for (const auto & entry : fs::directory_iterator(path)){
-            if(entry.path().string().find("mask1") != std::string::npos){
+            if(entry.path().string().find("mask") != std::string::npos){
                 n_drones++;
                 for (const auto & entry2 : fs::directory_iterator(entry)){
                     files.push_back(entry2.path().string());

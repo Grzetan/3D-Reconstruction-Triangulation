@@ -7,6 +7,9 @@
 #include "DroneClassifier.h"
 #include "DetectionsContainer.h"
 #include "utils.h"
+#include <filesystem>
+
+std::string OUTPUT_DIR = "./results/";
 
 int main(int argc, const char** argv){
     argparse::ArgumentParser args("3D-Reconstruction-Triangulation"); 
@@ -37,6 +40,12 @@ int main(int argc, const char** argv){
         std::exit(1);
     }
 
+    if(std::filesystem::exists(OUTPUT_DIR)){
+        std::filesystem::remove_all(OUTPUT_DIR);
+    }
+
+    std::filesystem::create_directory(OUTPUT_DIR);
+
     std::vector<const tdr::Camera*> cameras = loadCamerasXML(args.get("cameras_path").c_str());
 
     int n_drones = args.get<int>("n_drones");
@@ -53,7 +62,7 @@ int main(int argc, const char** argv){
 
         DroneClassifier classifier(triangulator, n_drones);
 
-        DetectionsContainer container(args.get("data_path").c_str(), 1, 7);
+        DetectionsContainer container(args.get("data_path").c_str(), 0, 7);
 
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -66,7 +75,7 @@ int main(int argc, const char** argv){
         std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
 
         for(int i=1; i<=n_drones; i++){
-            std::string name = "drone" + std::to_string(i) + ".ply";
+            std::string name = OUTPUT_DIR + "drone" + std::to_string(i) + ".ply";
             writeOutputFile(name.c_str(), triangulatedPoints[i-1]);
         }
 
@@ -93,7 +102,8 @@ int main(int argc, const char** argv){
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
         std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
 
-        writeOutputFile("drone.ply", triangulatedPoints);
+        std::string name = OUTPUT_DIR + std::string("drone.ply");
+        writeOutputFile(name.c_str(), triangulatedPoints);
 
         delete triangulator;
     }

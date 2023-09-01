@@ -130,17 +130,26 @@ double calculateError(Path& labelPath, Path& predPath){
             std::pow(predPath[i].y - labelPath[i].y, 2) +
             std::pow(predPath[i].z - labelPath[i].z, 2)
         );
-        sumError += err;
+        // std::cout << err << std::endl;
+        if(!std::isnan(err))
+            sumError += err;
     }
 
     return sumError / (double) size;
 }
 
-void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, int endFrame){
+void readInputCSV(const char* dir, std::vector<Path>& paths, int frequency, int startFrame, int endFrame){
     std::ifstream file(dir);
     std::string line, token;
     int i=0;
     
+    size_t N_DRONES = 4;
+    size_t MARKERS_PER_DRONE = 5;
+
+    for(int k=0; k<N_DRONES; k++){
+        paths.push_back({});
+    }
+
     while (std::getline(file, line)){
         if(line.find("Drone") != std::string::npos){
             continue;
@@ -159,21 +168,23 @@ void readInputCSV(const char* dir, Path& path, int frequency, int startFrame, in
             seperatedLine.push_back(std::stod(token));
         }
 
-        if(seperatedLine.size() != 12){
+        if(seperatedLine.size() != 1+N_DRONES*MARKERS_PER_DRONE*3){
             throw std::runtime_error("Error at CSV file");
         }
 
-        std::vector<cv::Point3d> markerPos;
-        for(int j=0; j<4; j++){
-            markerPos.push_back({seperatedLine[j*3], seperatedLine[j*3+1], seperatedLine[j*3+2]});
+        for(int drone=0; drone<N_DRONES; drone++){
+            std::vector<cv::Point3d> markerPos = {};
+            for(int j=0; j<MARKERS_PER_DRONE; j++){
+                markerPos.push_back({seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 3], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 1], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 2]});
+                // markerPos.push_back({seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 1], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 2], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 3]});
+            }
+            // std::vector<cv::Point3d> cross = cross3d(markerPos);
+            // if(cross.size() != 5) continue;
+
+            // cv::Point3d center = convert2global(cross, {50, 0, -20});
+            cv::Point3d center = convert2global(markerPos, {100, 0, -50});
+            paths[drone].push_back(center);            
         }
-
-        std::vector<cv::Point3d> cross = cross3d(markerPos);
-        if(cross.size() != 5) continue;
-
-        // cv::Point3d center = convert2global(cross, {50, 0, -20});
-        cv::Point3d center = convert2global(cross, {-180, 200, -450});
-        path.push_back(center);
     }
 }
 
