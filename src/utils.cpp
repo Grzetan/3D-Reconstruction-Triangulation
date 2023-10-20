@@ -138,6 +138,33 @@ double calculateError(Path& labelPath, Path& predPath){
     return sumError / (double) size;
 }
 
+double calculateMedian(Path& labelPath, Path& predPath){
+    std::vector<double> errors;
+    size_t size = std::min(labelPath.size(), predPath.size());
+
+    for(int i=0; i<size; i++){
+        if(predPath[i].x == 0 && predPath[i].y == 0 && predPath[i].z == 0) continue;
+        double err = std::sqrt(
+            std::pow(predPath[i].x - labelPath[i].x, 2) +
+            std::pow(predPath[i].y - labelPath[i].y, 2) +
+            std::pow(predPath[i].z - labelPath[i].z, 2)
+        );
+        // std::cout << err << std::endl;
+        if(!std::isnan(err))
+            errors.push_back(err);
+    }
+
+    if(errors.size() == 0){
+        throw std::runtime_error("There are no errors to calculate median from");
+    }
+
+    if(errors.size() % 2 == 1){
+        return errors[(errors.size() - 1) / 2];
+    }else{
+        return (errors[errors.size() / 2] + errors[errors.size() / 2 - 1]) / 2;
+    }
+}
+
 void readInputCSV(const char* dir, std::vector<Path>& paths, int frequency, int startFrame, int endFrame){
     std::ifstream file(dir);
     std::string line, token;
@@ -182,7 +209,7 @@ void readInputCSV(const char* dir, std::vector<Path>& paths, int frequency, int 
             // if(cross.size() != 5) continue;
 
             // cv::Point3d center = convert2global(cross, {50, 0, -20});
-            cv::Point3d center = convert2global(markerPos, {100, 0, -50});
+            cv::Point3d center = convert2global(markerPos, {0,0,0});
             paths[drone].push_back(center);            
         }
     }

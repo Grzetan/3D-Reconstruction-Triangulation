@@ -45,7 +45,7 @@ int main(int argc, const char** argv){
 
     // Read label paths from vicon system
     std::vector<Path> labelPaths;
-    readInputCSV(args.get("label_path").c_str(), labelPaths, args.get<int>("--frequency"));
+    readInputCSV(args.get("label_path").c_str(), labelPaths, args.get<int>("--frequency"), 0, 3550);
 
     // Write label paths to PLY for visualization
     for(int i=0; i<labelPaths.size(); i++){
@@ -61,17 +61,20 @@ int main(int argc, const char** argv){
             predPath.push_back({p[0], p[1], p[2]});
         }
 
-        double min = 1e+8;
+        double minAvg = 1e+8;
+        double minMedian = 1e+8;
         std::string labelPath = "";
         for(int i=0; i<labelPaths.size(); i++){
             double error = calculateError(labelPaths[i], predPath);
-            if(error < min){
-                min = error;
+            double median = calculateMedian(labelPaths[i], predPath);
+            if(error < minAvg){
+                minAvg = error;
+                minMedian = median;
                 labelPath = OUTPUT_DIR + "label_" + std::to_string(i+1) + ".ply";
             }
         }
 
-        std::cout << entry.path() << " with " << labelPath << ": " << min <<std::endl;
+        std::cout << entry.path() << " with " << labelPath << ": average error: " << minAvg << " median error: " << minMedian <<std::endl;
 
         // double error = calculateError(labelPaths[0], predPath);
         // std::cout << "Error: " << error << std::endl;

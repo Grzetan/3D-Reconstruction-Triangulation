@@ -28,6 +28,8 @@ void writeOutputFile(const char* path, const std::vector<cv::Point3d>& triangula
 
 double calculateError(Path& labelPath, Path& predPath);
 
+double calculateMedian(Path& labelPath, Path& predPath);
+
 /** Funkcja oblicza globalne współrzędne punku podanego we współrzenych drona
 * @param[in] cross wektor 5 punktów ramion krzyża w postaci [1. punkt ramienia x,2. punkt ramienia x, 1. punkt ramienia y, 2. punkt ramienia y, punkt przecięcia]
 * @param[in] punkt w lokalnym układnie współrzędnych związanych z ramionami x i y
