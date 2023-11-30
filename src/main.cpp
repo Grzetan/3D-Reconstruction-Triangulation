@@ -50,63 +50,35 @@ int main(int argc, const char** argv){
 
     int n_drones = args.get<int>("n_drones");
 
-    if(n_drones > 1){
-        Triangulator* triangulator;
-        if(args.get<std::string>("--triangulator") == "matrix"){
-            triangulator = new MatrixTriangulator(cameras);
-        }else if(args.get<std::string>("--triangulator") == "ray"){
-            triangulator = new RayTriangulator(cameras);
-        }else{
-            throw std::runtime_error("Invalid --triangulator argument. Allowed options are \'matrix\' and \'ray\'");
-        }
-
-        DroneClassifier classifier(triangulator, n_drones);
-
-        DetectionsContainer container(args.get("data_path").c_str(), 0, 7);
-
-        auto start = std::chrono::high_resolution_clock::now();
-
-        std::vector<std::vector<cv::Point3d>> triangulatedPoints;
-        classifier.classifyDrones(container, triangulatedPoints);
-
-        auto stop = std::chrono::high_resolution_clock::now();
-    
-        auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
-
-        for(int i=1; i<=n_drones; i++){
-            std::string name = OUTPUT_DIR + "drone" + std::to_string(i) + ".ply";
-            writeOutputFile(name.c_str(), triangulatedPoints[i-1]);
-        }
-
-        delete triangulator;
-    }else if(n_drones == 1){
-        Triangulator* triangulator;
-        if(args.get("triangulator") == "matrix"){
-            triangulator = new MatrixTriangulator(cameras);
-        }else if(args.get("triangulator") == "ray"){
-            triangulator = new RayTriangulator(cameras);
-        }else{
-            throw std::runtime_error("Invalid --triangulator argument. Allowed options are \'matrix\' and \'ray\'");
-        }
-
-        std::vector<std::vector<cv::Point2d>> dronePoints;
-        loadPointsOneDrone(args.get("data_path").c_str(), dronePoints);
-
-        auto start = std::chrono::high_resolution_clock::now();
-
-        std::vector<cv::Point3d> triangulatedPoints = triangulator->triangulatePoints(dronePoints);
-
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
-
-        std::string name = OUTPUT_DIR + std::string("drone.ply");
-        writeOutputFile(name.c_str(), triangulatedPoints);
-
-        delete triangulator;
+    Triangulator* triangulator;
+    if(args.get<std::string>("--triangulator") == "matrix"){
+        triangulator = new MatrixTriangulator(cameras);
+    }else if(args.get<std::string>("--triangulator") == "ray"){
+        triangulator = new RayTriangulator(cameras);
+    }else{
+        throw std::runtime_error("Invalid --triangulator argument. Allowed options are \'matrix\' and \'ray\'");
     }
+
+    DroneClassifier classifier(triangulator, n_drones);
+
+    DetectionsContainer container(args.get("data_path").c_str(), 0, 7);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    std::vector<std::vector<cv::Point3d>> triangulatedPoints;
+    classifier.classifyDrones(container, triangulatedPoints);
+
+    auto stop = std::chrono::high_resolution_clock::now();
+
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "Execution time: " << time.count() * 1e-6 << "s" << std::endl;
+
+    for(int i=1; i<=n_drones; i++){
+        std::string name = OUTPUT_DIR + "drone" + std::to_string(i) + ".ply";
+        writeOutputFile(name.c_str(), triangulatedPoints[i-1]);
+    }
+
+    delete triangulator;
 
     // Free memory
     for(const auto& cam : cameras)

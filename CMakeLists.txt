@@ -5,7 +5,6 @@ find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 set(EXE_NAME main)
 set(TEST_EXE_NAME test)
-set(TEST_AIRSIM airsim)
 set(PATH "./src")
 set(SOURCE_FILES
     ${PATH}/pugixml.hpp
@@ -36,10 +35,8 @@ set(SOURCE_FILES_TEST
 
 add_executable( ${EXE_NAME} ${PATH}/main.cpp ${SOURCE_FILES} )
 add_executable( ${TEST_EXE_NAME} ${PATH}/test.cpp ${SOURCE_FILES_TEST})
-add_executable( ${TEST_AIRSIM} ${PATH}/test_airsim.cpp ${SOURCE_FILES})
 target_link_libraries( ${EXE_NAME} ${OpenCV_LIBS} )
 target_link_libraries( ${TEST_EXE_NAME} ${OpenCV_LIBS} )
-target_link_libraries( ${TEST_AIRSIM} ${OpenCV_LIBS} )
 
 # add_custom_command(TARGET ${EXE_NAME}
 #                    COMMAND ${EXE_NAME}

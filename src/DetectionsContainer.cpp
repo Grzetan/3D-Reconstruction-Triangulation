@@ -27,7 +27,7 @@ void DetectionsContainer::readFiles(const std::vector<std::string>& files, int o
             std::istringstream iss(line);
             std::vector<int> seperatedLine;
 
-            while(std::getline(iss, token, ';')) {
+            while(std::getline(iss, token, ',')) {
                 if(token != ""){
                     seperatedLine.push_back(std::stoi(token));
                 }
