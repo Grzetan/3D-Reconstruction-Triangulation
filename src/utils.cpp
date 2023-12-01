@@ -170,7 +170,7 @@ void readInputCSV(const char* dir, std::vector<Path>& paths, int frequency, int 
     std::string line, token;
     int i=0;
     
-    size_t N_DRONES = 4;
+    size_t N_DRONES = 3;
     size_t MARKERS_PER_DRONE = 5;
 
     for(int k=0; k<N_DRONES; k++){
@@ -202,15 +202,18 @@ void readInputCSV(const char* dir, std::vector<Path>& paths, int frequency, int 
         for(int drone=0; drone<N_DRONES; drone++){
             std::vector<cv::Point3d> markerPos = {};
             for(int j=0; j<MARKERS_PER_DRONE; j++){
-                markerPos.push_back({seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 3], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 1], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 2]});
+                markerPos.push_back({seperatedLine[MARKERS_PER_DRONE*drone*3 + j*3 + 1], seperatedLine[MARKERS_PER_DRONE*drone*3 + j*3 + 2], seperatedLine[MARKERS_PER_DRONE*drone*3 + j*3 + 3]});
                 // markerPos.push_back({seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 1], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 2], seperatedLine[MARKERS_PER_DRONE*drone*3 + j + 3]});
             }
-            // std::vector<cv::Point3d> cross = cross3d(markerPos);
-            // if(cross.size() != 5) continue;
+            std::vector<cv::Point3d> cross = cross3d(markerPos);
+            if(cross.size() != 5){
+                std::cout << "OK" << std::endl;
+                continue;
+            }
 
             // cv::Point3d center = convert2global(cross, {50, 0, -20});
-            cv::Point3d center = convert2global(markerPos, {0,0,0});
-            paths[drone].push_back(center);            
+            // cv::Point3d center = convert2global(markerPos, {0,0,0});
+            paths[drone].push_back(cross[4]);            
         }
     }
 }

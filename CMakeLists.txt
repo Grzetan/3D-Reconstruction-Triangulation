@@ -35,8 +35,10 @@ set(SOURCE_FILES_TEST
 
 add_executable( ${EXE_NAME} ${PATH}/main.cpp ${SOURCE_FILES} )
 add_executable( ${TEST_EXE_NAME} ${PATH}/test.cpp ${SOURCE_FILES_TEST})
+add_executable( "generate" "./src/generate_xcp" ${SOURCE_FILES})
 target_link_libraries( ${EXE_NAME} ${OpenCV_LIBS} )
 target_link_libraries( ${TEST_EXE_NAME} ${OpenCV_LIBS} )
+target_link_libraries( "generate" ${OpenCV_LIBS})
 
 # add_custom_command(TARGET ${EXE_NAME}
 #                    COMMAND ${EXE_NAME}

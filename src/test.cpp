@@ -45,7 +45,7 @@ int main(int argc, const char** argv){
 
     // Read label paths from vicon system
     std::vector<Path> labelPaths;
-    readInputCSV(args.get("label_path").c_str(), labelPaths, args.get<int>("--frequency"), 0, 3550);
+    readInputCSV(args.get("label_path").c_str(), labelPaths, args.get<int>("--frequency"));
 
     // Write label paths to PLY for visualization
     for(int i=0; i<labelPaths.size(); i++){
