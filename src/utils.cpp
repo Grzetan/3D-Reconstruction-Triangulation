@@ -74,9 +74,9 @@ std::vector<const tdr::Camera*> loadCamerasXML(const char* path){
         // Read orientation
         std::stringstream orientation = std::stringstream(controlFrame.attribute("ORIENTATION").value());
         double w, i, j, k;
-        orientation >> i >> j >> k >> w;
+        orientation >> w >> i >> j >> k;
 
-        const tdr::Camera* cam = createCamera(id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z), (cv::Mat_<double>(4, 1) << w, -i, -j, -k));
+        const tdr::Camera* cam = createCamera(id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z), (cv::Mat_<double>(4, 1) << w, i, j, k));
         cameras.push_back(cam);
     }
 
@@ -170,8 +170,8 @@ void readInputCSV(const char* dir, std::vector<Path>& paths, int frequency, int 
     std::string line, token;
     int i=0;
     
-    size_t N_DRONES = 3;
-    size_t MARKERS_PER_DRONE = 5;
+    size_t N_DRONES = 1;
+    size_t MARKERS_PER_DRONE = 4;
 
     for(int k=0; k<N_DRONES; k++){
         paths.push_back({});

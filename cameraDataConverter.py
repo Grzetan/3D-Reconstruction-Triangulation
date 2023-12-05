@@ -7,7 +7,7 @@ import cv2
 
 data = []
 
-with open("./dataset/R02_D1/stationary_camera_data.csv", 'r') as f:
+with open("./dataset/R04_D2/stationary_camera_data.csv", 'r') as f:
     for line in f.readlines()[1:]:
         splitted = line.split(",")
         pos = np.zeros((3, 1))
@@ -27,7 +27,7 @@ for e in data:
     inv_mat = mat * -1
     
     pos = np.matmul(inv_mat, e[0]).ravel()
-    print(f"Pos: {pos[0]}, {pos[1]}, {pos[2]}")
+    print(f"Pos: {pos[0]} {pos[1]} {pos[2]}")
     
     R = mathutils.Matrix()
     R[0][0] = inv_mat[0][0]
@@ -40,5 +40,6 @@ for e in data:
     R[2][1] = inv_mat[2][1]
     R[2][2] = inv_mat[2][2]
 
-    print("Orientation:", R.to_quaternion())
+    rot_quat = R.to_quaternion()
+    print("Orientation:", rot_quat[0], rot_quat[1], rot_quat[2], rot_quat[3])
     print()
