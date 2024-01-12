@@ -1,0 +1,6 @@
+﻿---
+BasedOnStyle: Google
+Language: Cpp
+
+...
+#find ./src \( -name "*.cpp" -o -name "*.h" \) -exec clang-format -i -style=file {} \;

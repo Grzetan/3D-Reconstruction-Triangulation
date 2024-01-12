@@ -31,7 +31,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
 // clang-format off
 /*
 
@@ -50,6 +49,7 @@ SOFTWARE.
 
 #include <array>
 #include <cctype>
+#include <climits>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -58,7 +58,6 @@ SOFTWARE.
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <climits>
 
 // General namespace wrapping all Happly things.
 namespace happly {
@@ -113,16 +112,16 @@ template <typename S>
 S* addressIfSame(S& t, int) {return &t;}
 
 // clang-format on
-} // namespace
+}  // namespace
 
 /**
- * @brief A generic property, which is associated with some element. Can be plain Property or a ListProperty, of some
- * type.  Generally, the user should not need to interact with these directly, but they are exposed in case someone
- * wants to get clever.
+ * @brief A generic property, which is associated with some element. Can be
+ * plain Property or a ListProperty, of some type.  Generally, the user should
+ * not need to interact with these directly, but they are exposed in case
+ * someone wants to get clever.
  */
 class Property {
-
-public:
+ public:
   /**
    * @brief Create a new Property with the given name.
    *
@@ -141,22 +140,26 @@ public:
   virtual void reserve(size_t capacity) = 0;
 
   /**
-   * @brief (ASCII reading) Parse out the next value of this property from a list of tokens.
+   * @brief (ASCII reading) Parse out the next value of this property from a
+   * list of tokens.
    *
    * @param tokens The list of property tokens for the element.
    * @param currEntry Index in to tokens, updated after this property is read.
    */
-  virtual void parseNext(const std::vector<std::string>& tokens, size_t& currEntry) = 0;
+  virtual void parseNext(const std::vector<std::string>& tokens,
+                         size_t& currEntry) = 0;
 
   /**
-   * @brief (binary reading) Copy the next value of this property from a stream of bits.
+   * @brief (binary reading) Copy the next value of this property from a stream
+   * of bits.
    *
    * @param stream Stream to read from.
    */
   virtual void readNext(std::istream& stream) = 0;
 
   /**
-   * @brief (binary reading) Copy the next value of this property from a stream of bits.
+   * @brief (binary reading) Copy the next value of this property from a stream
+   * of bits.
    *
    * @param stream Stream to read from.
    */
@@ -170,7 +173,8 @@ public:
   virtual void writeHeader(std::ostream& outStream) = 0;
 
   /**
-   * @brief (ASCII writing) write this property for some element to a stream in plaintext
+   * @brief (ASCII writing) write this property for some element to a stream in
+   * plaintext
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
@@ -178,7 +182,8 @@ public:
   virtual void writeDataASCII(std::ostream& outStream, size_t iElement) = 0;
 
   /**
-   * @brief (binary writing) copy the bits of this property for some element to a stream
+   * @brief (binary writing) copy the bits of this property for some element to
+   * a stream
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
@@ -186,12 +191,14 @@ public:
   virtual void writeDataBinary(std::ostream& outStream, size_t iElement) = 0;
 
   /**
-   * @brief (binary writing) copy the bits of this property for some element to a stream
+   * @brief (binary writing) copy the bits of this property for some element to
+   * a stream
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
    */
-  virtual void writeDataBinaryBigEndian(std::ostream& outStream, size_t iElement) = 0;
+  virtual void writeDataBinaryBigEndian(std::ostream& outStream,
+                                        size_t iElement) = 0;
 
   /**
    * @brief Number of element entries for this property
@@ -238,44 +245,50 @@ T swapEndian(T val) {
   return val;
 }
 
-// The following specializations for single-byte types are used to avoid compiler warnings.
-template <> int8_t swapEndian<int8_t>(int8_t val) { return val; }
-template <> uint8_t swapEndian<uint8_t>(uint8_t val) { return val; }
-
+// The following specializations for single-byte types are used to avoid
+// compiler warnings.
+template <>
+int8_t swapEndian<int8_t>(int8_t val) {
+  return val;
+}
+template <>
+uint8_t swapEndian<uint8_t>(uint8_t val) {
+  return val;
+}
 
 // Unpack flattened list from the convention used in TypedListProperty
 template <typename T>
-std::vector<std::vector<T>> unflattenList(const std::vector<T>& flatList, const std::vector<size_t> flatListStarts) {
+std::vector<std::vector<T>> unflattenList(
+    const std::vector<T>& flatList, const std::vector<size_t> flatListStarts) {
   size_t outerCount = flatListStarts.size() - 1;
 
   // Put the output here
   std::vector<std::vector<T>> outLists(outerCount);
 
   if (outerCount == 0) {
-    return outLists; // quick out for empty
+    return outLists;  // quick out for empty
   }
 
   // Copy each sublist
   for (size_t iOuter = 0; iOuter < outerCount; iOuter++) {
     size_t iFlatStart = flatListStarts[iOuter];
     size_t iFlatEnd = flatListStarts[iOuter + 1];
-    outLists[iOuter].insert(outLists[iOuter].begin(), flatList.begin() + iFlatStart, flatList.begin() + iFlatEnd);
+    outLists[iOuter].insert(outLists[iOuter].begin(),
+                            flatList.begin() + iFlatStart,
+                            flatList.begin() + iFlatEnd);
   }
 
   return outLists;
 }
 
-
-}; // namespace
-
+};  // namespace
 
 /**
  * @brief A property which takes a single value (not a list).
  */
 template <class T>
 class TypedProperty : public Property {
-
-public:
+ public:
   /**
    * @brief Create a new Property with the given name.
    *
@@ -284,7 +297,9 @@ public:
   TypedProperty(const std::string& name_) : Property(name_) {
     if (typeName<T>() == "unknown") {
       // TODO should really be a compile-time error
-      throw std::runtime_error("Attempted property type does not match any type defined by the .ply format.");
+      throw std::runtime_error(
+          "Attempted property type does not match any type defined by the .ply "
+          "format.");
     }
   };
 
@@ -294,9 +309,12 @@ public:
    * @param name_
    * @param data_
    */
-  TypedProperty(const std::string& name_, const std::vector<T>& data_) : Property(name_), data(data_) {
+  TypedProperty(const std::string& name_, const std::vector<T>& data_)
+      : Property(name_), data(data_) {
     if (typeName<T>() == "unknown") {
-      throw std::runtime_error("Attempted property type does not match any type defined by the .ply format.");
+      throw std::runtime_error(
+          "Attempted property type does not match any type defined by the .ply "
+          "format.");
     }
   };
 
@@ -310,22 +328,25 @@ public:
   virtual void reserve(size_t capacity) override { data.reserve(capacity); }
 
   /**
-   * @brief (ASCII reading) Parse out the next value of this property from a list of tokens.
+   * @brief (ASCII reading) Parse out the next value of this property from a
+   * list of tokens.
    *
    * @param tokens The list of property tokens for the element.
    * @param currEntry Index in to tokens, updated after this property is read.
    */
-  virtual void parseNext(const std::vector<std::string>& tokens, size_t& currEntry) override {
+  virtual void parseNext(const std::vector<std::string>& tokens,
+                         size_t& currEntry) override {
     data.emplace_back();
     std::istringstream iss(tokens[currEntry]);
-    typename SerializeType<T>::type tmp; // usually the same type as T
+    typename SerializeType<T>::type tmp;  // usually the same type as T
     iss >> tmp;
     data.back() = tmp;
     currEntry++;
   };
 
   /**
-   * @brief (binary reading) Copy the next value of this property from a stream of bits.
+   * @brief (binary reading) Copy the next value of this property from a stream
+   * of bits.
    *
    * @param stream Stream to read from.
    */
@@ -335,7 +356,8 @@ public:
   }
 
   /**
-   * @brief (binary reading) Copy the next value of this property from a stream of bits.
+   * @brief (binary reading) Copy the next value of this property from a stream
+   * of bits.
    *
    * @param stream Stream to read from.
    */
@@ -355,33 +377,40 @@ public:
   }
 
   /**
-   * @brief (ASCII writing) write this property for some element to a stream in plaintext
+   * @brief (ASCII writing) write this property for some element to a stream in
+   * plaintext
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
    */
-  virtual void writeDataASCII(std::ostream& outStream, size_t iElement) override {
+  virtual void writeDataASCII(std::ostream& outStream,
+                              size_t iElement) override {
     outStream.precision(std::numeric_limits<T>::max_digits10);
-    outStream << static_cast<typename SerializeType<T>::type>(data[iElement]); // case is usually a no-op
+    outStream << static_cast<typename SerializeType<T>::type>(
+        data[iElement]);  // case is usually a no-op
   }
 
   /**
-   * @brief (binary writing) copy the bits of this property for some element to a stream
+   * @brief (binary writing) copy the bits of this property for some element to
+   * a stream
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
    */
-  virtual void writeDataBinary(std::ostream& outStream, size_t iElement) override {
+  virtual void writeDataBinary(std::ostream& outStream,
+                               size_t iElement) override {
     outStream.write((char*)&data[iElement], sizeof(T));
   }
 
   /**
-   * @brief (binary writing) copy the bits of this property for some element to a stream
+   * @brief (binary writing) copy the bits of this property for some element to
+   * a stream
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
    */
-  virtual void writeDataBinaryBigEndian(std::ostream& outStream, size_t iElement) override {
+  virtual void writeDataBinaryBigEndian(std::ostream& outStream,
+                                        size_t iElement) override {
     auto value = swapEndian(data[iElement]);
     outStream.write((char*)&value, sizeof(T));
   }
@@ -392,7 +421,6 @@ public:
    * @return
    */
   virtual size_t size() override { return data.size(); }
-
 
   /**
    * @brief A string naming the type of the property
@@ -407,22 +435,24 @@ public:
   std::vector<T> data;
 };
 
-
 /**
- * @brief A property which is a list of value (eg, 3 doubles). Note that lists are always variable length per-element.
+ * @brief A property which is a list of value (eg, 3 doubles). Note that lists
+ * are always variable length per-element.
  */
 template <class T>
 class TypedListProperty : public Property {
-
-public:
+ public:
   /**
    * @brief Create a new Property with the given name.
    *
    * @param name_
    */
-  TypedListProperty(const std::string& name_, int listCountBytes_) : Property(name_), listCountBytes(listCountBytes_) {
+  TypedListProperty(const std::string& name_, int listCountBytes_)
+      : Property(name_), listCountBytes(listCountBytes_) {
     if (typeName<T>() == "unknown") {
-      throw std::runtime_error("Attempted property type does not match any type defined by the .ply format.");
+      throw std::runtime_error(
+          "Attempted property type does not match any type defined by the .ply "
+          "format.");
     }
 
     flattenedIndexStart.push_back(0);
@@ -434,9 +464,13 @@ public:
    * @param name_
    * @param data_
    */
-  TypedListProperty(const std::string& name_, const std::vector<std::vector<T>>& data_) : Property(name_) {
+  TypedListProperty(const std::string& name_,
+                    const std::vector<std::vector<T>>& data_)
+      : Property(name_) {
     if (typeName<T>() == "unknown") {
-      throw std::runtime_error("Attempted property type does not match any type defined by the .ply format.");
+      throw std::runtime_error(
+          "Attempted property type does not match any type defined by the .ply "
+          "format.");
     }
 
     // Populate list with data
@@ -457,18 +491,19 @@ public:
    * @param capacity Expected number of elements.
    */
   virtual void reserve(size_t capacity) override {
-    flattenedData.reserve(3 * capacity); // optimize for triangle meshes
+    flattenedData.reserve(3 * capacity);  // optimize for triangle meshes
     flattenedIndexStart.reserve(capacity + 1);
   }
 
   /**
-   * @brief (ASCII reading) Parse out the next value of this property from a list of tokens.
+   * @brief (ASCII reading) Parse out the next value of this property from a
+   * list of tokens.
    *
    * @param tokens The list of property tokens for the element.
    * @param currEntry Index in to tokens, updated after this property is read.
    */
-  virtual void parseNext(const std::vector<std::string>& tokens, size_t& currEntry) override {
-
+  virtual void parseNext(const std::vector<std::string>& tokens,
+                         size_t& currEntry) override {
     std::istringstream iss(tokens[currEntry]);
     size_t count;
     iss >> count;
@@ -479,7 +514,7 @@ public:
     flattenedData.resize(afterSize);
     for (size_t iFlat = currSize; iFlat < afterSize; iFlat++) {
       std::istringstream iss(tokens[currEntry]);
-      typename SerializeType<T>::type tmp; // usually the same type as T
+      typename SerializeType<T>::type tmp;  // usually the same type as T
       iss >> tmp;
       flattenedData[iFlat] = tmp;
       currEntry++;
@@ -488,12 +523,12 @@ public:
   }
 
   /**
-   * @brief (binary reading) Copy the next value of this property from a stream of bits.
+   * @brief (binary reading) Copy the next value of this property from a stream
+   * of bits.
    *
    * @param stream Stream to read from.
    */
   virtual void readNext(std::istream& stream) override {
-
     // Read the size of the list
     size_t count = 0;
     stream.read(((char*)&count), listCountBytes);
@@ -509,12 +544,12 @@ public:
   }
 
   /**
-   * @brief (binary reading) Copy the next value of this property from a stream of bits.
+   * @brief (binary reading) Copy the next value of this property from a stream
+   * of bits.
    *
    * @param stream Stream to read from.
    */
   virtual void readNextBigEndian(std::istream& stream) override {
-
     // Read the size of the list
     size_t count = 0;
     stream.read(((char*)&count), listCountBytes);
@@ -542,7 +577,8 @@ public:
   }
 
   /**
-   * @brief (reading) Write a header entry for this property. Note that we already use "uchar" for the list count type.
+   * @brief (reading) Write a header entry for this property. Note that we
+   * already use "uchar" for the list count type.
    *
    * @param outStream Stream to write to.
    */
@@ -552,12 +588,14 @@ public:
   }
 
   /**
-   * @brief (ASCII writing) write this property for some element to a stream in plaintext
+   * @brief (ASCII writing) write this property for some element to a stream in
+   * plaintext
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
    */
-  virtual void writeDataASCII(std::ostream& outStream, size_t iElement) override {
+  virtual void writeDataASCII(std::ostream& outStream,
+                              size_t iElement) override {
     size_t dataStart = flattenedIndexStart[iElement];
     size_t dataEnd = flattenedIndexStart[iElement + 1];
 
@@ -565,23 +603,28 @@ public:
     size_t dataCount = dataEnd - dataStart;
     if (dataCount > std::numeric_limits<uint8_t>::max()) {
       throw std::runtime_error(
-          "List property has an element with more entries than fit in a uchar. See note in README.");
+          "List property has an element with more entries than fit in a uchar. "
+          "See note in README.");
     }
 
     outStream << dataCount;
     outStream.precision(std::numeric_limits<T>::max_digits10);
     for (size_t iFlat = dataStart; iFlat < dataEnd; iFlat++) {
-      outStream << " " << static_cast<typename SerializeType<T>::type>(flattenedData[iFlat]); // cast is usually a no-op
+      outStream << " "
+                << static_cast<typename SerializeType<T>::type>(
+                       flattenedData[iFlat]);  // cast is usually a no-op
     }
   }
 
   /**
-   * @brief (binary writing) copy the bits of this property for some element to a stream
+   * @brief (binary writing) copy the bits of this property for some element to
+   * a stream
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
    */
-  virtual void writeDataBinary(std::ostream& outStream, size_t iElement) override {
+  virtual void writeDataBinary(std::ostream& outStream,
+                               size_t iElement) override {
     size_t dataStart = flattenedIndexStart[iElement];
     size_t dataEnd = flattenedIndexStart[iElement + 1];
 
@@ -589,7 +632,8 @@ public:
     size_t dataCount = dataEnd - dataStart;
     if (dataCount > std::numeric_limits<uint8_t>::max()) {
       throw std::runtime_error(
-          "List property has an element with more entries than fit in a uchar. See note in README.");
+          "List property has an element with more entries than fit in a uchar. "
+          "See note in README.");
     }
     uint8_t count = static_cast<uint8_t>(dataCount);
 
@@ -598,12 +642,14 @@ public:
   }
 
   /**
-   * @brief (binary writing) copy the bits of this property for some element to a stream
+   * @brief (binary writing) copy the bits of this property for some element to
+   * a stream
    *
    * @param outStream Stream to write to.
    * @param iElement index of the element to write.
    */
-  virtual void writeDataBinaryBigEndian(std::ostream& outStream, size_t iElement) override {
+  virtual void writeDataBinaryBigEndian(std::ostream& outStream,
+                                        size_t iElement) override {
     size_t dataStart = flattenedIndexStart[iElement];
     size_t dataEnd = flattenedIndexStart[iElement + 1];
 
@@ -611,7 +657,8 @@ public:
     size_t dataCount = dataEnd - dataStart;
     if (dataCount > std::numeric_limits<uint8_t>::max()) {
       throw std::runtime_error(
-          "List property has an element with more entries than fit in a uchar. See note in README.");
+          "List property has an element with more entries than fit in a uchar. "
+          "See note in README.");
     }
     uint8_t count = static_cast<uint8_t>(dataCount);
 
@@ -629,7 +676,6 @@ public:
    */
   virtual size_t size() override { return flattenedIndexStart.size() - 1; }
 
-
   /**
    * @brief A string naming the type of the property
    *
@@ -638,14 +684,15 @@ public:
   virtual std::string propertyTypeName() override { return typeName<T>(); }
 
   /**
-   * @brief The (flattened) data for the property, as formed by concatenating all of the individual element lists
-   * together.
+   * @brief The (flattened) data for the property, as formed by concatenating
+   * all of the individual element lists together.
    */
   std::vector<T> flattenedData;
 
   /**
-   * @brief Indices in to flattenedData. The i'th element gives the index in to flattenedData where the element's data
-   * begins. A final entry is included which is the length of flattenedData. Size is N_elem + 1.
+   * @brief Indices in to flattenedData. The i'th element gives the index in to
+   * flattenedData where the element's data begins. A final entry is included
+   * which is the length of flattenedData. Size is N_elem + 1.
    */
   std::vector<size_t> flattenedIndexStart;
 
@@ -654,7 +701,6 @@ public:
    */
   int listCountBytes = -1;
 };
-
 
 /**
  * @brief Helper function to construct a new property of the appropriate type.
@@ -666,24 +712,26 @@ public:
  *
  * @return A new Property with the proper type.
  */
-inline std::unique_ptr<Property> createPropertyWithType(const std::string& name, const std::string& typeStr,
-                                                        bool isList, const std::string& listCountTypeStr) {
-
-  // == Figure out how many bytes the list count field has, if this is a list type
-  // Note: some files seem to use signed types here, we read the width but always parse as if unsigned
+inline std::unique_ptr<Property> createPropertyWithType(
+    const std::string& name, const std::string& typeStr, bool isList,
+    const std::string& listCountTypeStr) {
+  // == Figure out how many bytes the list count field has, if this is a list
+  // type Note: some files seem to use signed types here, we read the width but
+  // always parse as if unsigned
   int listCountBytes = -1;
   if (isList) {
-    if (listCountTypeStr == "uchar" || listCountTypeStr == "uint8" || listCountTypeStr == "char" ||
-        listCountTypeStr == "int8") {
+    if (listCountTypeStr == "uchar" || listCountTypeStr == "uint8" ||
+        listCountTypeStr == "char" || listCountTypeStr == "int8") {
       listCountBytes = 1;
-    } else if (listCountTypeStr == "ushort" || listCountTypeStr == "uint16" || listCountTypeStr == "short" ||
-               listCountTypeStr == "int16") {
+    } else if (listCountTypeStr == "ushort" || listCountTypeStr == "uint16" ||
+               listCountTypeStr == "short" || listCountTypeStr == "int16") {
       listCountBytes = 2;
-    } else if (listCountTypeStr == "uint" || listCountTypeStr == "uint32" || listCountTypeStr == "int" ||
-               listCountTypeStr == "int32") {
+    } else if (listCountTypeStr == "uint" || listCountTypeStr == "uint32" ||
+               listCountTypeStr == "int" || listCountTypeStr == "int32") {
       listCountBytes = 4;
     } else {
-      throw std::runtime_error("Unrecognized list count type: " + listCountTypeStr);
+      throw std::runtime_error("Unrecognized list count type: " +
+                               listCountTypeStr);
     }
   }
 
@@ -692,7 +740,8 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 8 bit unsigned
   if (typeStr == "uchar" || typeStr == "uint8") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<uint8_t>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<uint8_t>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<uint8_t>(name));
     }
@@ -701,7 +750,8 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 16 bit unsigned
   else if (typeStr == "ushort" || typeStr == "uint16") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<uint16_t>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<uint16_t>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<uint16_t>(name));
     }
@@ -710,7 +760,8 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 32 bit unsigned
   else if (typeStr == "uint" || typeStr == "uint32") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<uint32_t>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<uint32_t>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<uint32_t>(name));
     }
@@ -721,7 +772,8 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 8 bit signed
   if (typeStr == "char" || typeStr == "int8") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<int8_t>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<int8_t>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<int8_t>(name));
     }
@@ -730,7 +782,8 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 16 bit signed
   else if (typeStr == "short" || typeStr == "int16") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<int16_t>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<int16_t>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<int16_t>(name));
     }
@@ -739,7 +792,8 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 32 bit signed
   else if (typeStr == "int" || typeStr == "int32") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<int32_t>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<int32_t>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<int32_t>(name));
     }
@@ -750,7 +804,8 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 32 bit float
   else if (typeStr == "float" || typeStr == "float32") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<float>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<float>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<float>(name));
     }
@@ -759,32 +814,35 @@ inline std::unique_ptr<Property> createPropertyWithType(const std::string& name,
   // 64 bit float
   else if (typeStr == "double" || typeStr == "float64") {
     if (isList) {
-      return std::unique_ptr<Property>(new TypedListProperty<double>(name, listCountBytes));
+      return std::unique_ptr<Property>(
+          new TypedListProperty<double>(name, listCountBytes));
     } else {
       return std::unique_ptr<Property>(new TypedProperty<double>(name));
     }
   }
 
   else {
-    throw std::runtime_error("Data type: " + typeStr + " cannot be mapped to .ply format");
+    throw std::runtime_error("Data type: " + typeStr +
+                             " cannot be mapped to .ply format");
   }
 }
 
 /**
- * @brief An element (more properly an element type) in the .ply object. Tracks the name of the elemnt type (eg,
- * "vertices"), the number of elements of that type (eg, 1244), and any properties associated with that element (eg,
+ * @brief An element (more properly an element type) in the .ply object. Tracks
+ * the name of the elemnt type (eg, "vertices"), the number of elements of that
+ * type (eg, 1244), and any properties associated with that element (eg,
  * "position", "color").
  */
 class Element {
-
-public:
+ public:
   /**
    * @brief Create a new element type.
    *
    * @param name_ Name of the element type (eg, "vertices")
    * @param count_ Number of instances of this element.
    */
-  Element(const std::string& name_, size_t count_) : name(name_), count(count_) {}
+  Element(const std::string& name_, size_t count_)
+      : name(name_), count(count_) {}
 
   std::string name;
   size_t count;
@@ -818,7 +876,8 @@ public:
   bool hasPropertyType(const std::string& target) {
     for (std::unique_ptr<Property>& prop : properties) {
       if (prop->name == target) {
-        TypedProperty<T>* castedProp = dynamic_cast<TypedProperty<T>*>(prop.get());
+        TypedProperty<T>* castedProp =
+            dynamic_cast<TypedProperty<T>*>(prop.get());
         if (castedProp) {
           return true;
         }
@@ -842,7 +901,8 @@ public:
   }
 
   /**
-   * @brief Low-level method to get a pointer to a property. Users probably don't need to call this.
+   * @brief Low-level method to get a pointer to a property. Users probably
+   * don't need to call this.
    *
    * @param target The name of the property to get.
    *
@@ -854,7 +914,8 @@ public:
         return prop;
       }
     }
-    throw std::runtime_error("PLY parser: element " + name + " does not have property " + target);
+    throw std::runtime_error("PLY parser: element " + name +
+                             " does not have property " + target);
   }
 
   /**
@@ -862,13 +923,15 @@ public:
    *
    * @tparam T The type of the property
    * @param propertyName The name of the property
-   * @param data The data for the property. Must have the same length as the number of elements.
+   * @param data The data for the property. Must have the same length as the
+   * number of elements.
    */
   template <class T>
-  void addProperty(const std::string& propertyName, const std::vector<T>& data) {
-
+  void addProperty(const std::string& propertyName,
+                   const std::vector<T>& data) {
     if (data.size() != count) {
-      throw std::runtime_error("PLY write: new property " + propertyName + " has size which does not match element");
+      throw std::runtime_error("PLY write: new property " + propertyName +
+                               " has size which does not match element");
     }
 
     // If there is already some property with this name, remove it
@@ -879,11 +942,14 @@ public:
       }
     }
 
-    // Copy to canonical type. Often a no-op, but takes care of standardizing widths across platforms.
-    std::vector<typename CanonicalName<T>::type> canonicalVec(data.begin(), data.end());
+    // Copy to canonical type. Often a no-op, but takes care of standardizing
+    // widths across platforms.
+    std::vector<typename CanonicalName<T>::type> canonicalVec(data.begin(),
+                                                              data.end());
 
-    properties.push_back(
-        std::unique_ptr<Property>(new TypedProperty<typename CanonicalName<T>::type>(propertyName, canonicalVec)));
+    properties.push_back(std::unique_ptr<Property>(
+        new TypedProperty<typename CanonicalName<T>::type>(propertyName,
+                                                           canonicalVec)));
   }
 
   /**
@@ -891,13 +957,15 @@ public:
    *
    * @tparam T The type of the property (eg, "double" for a list of doubles)
    * @param propertyName The name of the property
-   * @param data The data for the property. Outer vector must have the same length as the number of elements.
+   * @param data The data for the property. Outer vector must have the same
+   * length as the number of elements.
    */
   template <class T>
-  void addListProperty(const std::string& propertyName, const std::vector<std::vector<T>>& data) {
-
+  void addListProperty(const std::string& propertyName,
+                       const std::vector<std::vector<T>>& data) {
     if (data.size() != count) {
-      throw std::runtime_error("PLY write: new property " + propertyName + " has size which does not match element");
+      throw std::runtime_error("PLY write: new property " + propertyName +
+                               " has size which does not match element");
     }
 
     // If there is already some property with this name, remove it
@@ -908,19 +976,22 @@ public:
       }
     }
 
-    // Copy to canonical type. Often a no-op, but takes care of standardizing widths across platforms.
+    // Copy to canonical type. Often a no-op, but takes care of standardizing
+    // widths across platforms.
     std::vector<std::vector<typename CanonicalName<T>::type>> canonicalListVec;
     for (const std::vector<T>& subList : data) {
       canonicalListVec.emplace_back(subList.begin(), subList.end());
     }
 
     properties.push_back(std::unique_ptr<Property>(
-        new TypedListProperty<typename CanonicalName<T>::type>(propertyName, canonicalListVec)));
+        new TypedListProperty<typename CanonicalName<T>::type>(
+            propertyName, canonicalListVec)));
   }
 
   /**
-   * @brief Get a vector of a data from a property for this element. Automatically promotes to larger types. Throws if
-   * requested data is unavailable.
+   * @brief Get a vector of a data from a property for this element.
+   * Automatically promotes to larger types. Throws if requested data is
+   * unavailable.
    *
    * @tparam T The type of data requested
    * @param propertyName The name of the property to get.
@@ -929,7 +1000,6 @@ public:
    */
   template <class T>
   std::vector<T> getProperty(const std::string& propertyName) {
-
     // Find the property
     std::unique_ptr<Property>& prop = getPropertyPtr(propertyName);
 
@@ -938,8 +1008,9 @@ public:
   }
 
   /**
-   * @brief Get a vector of a data from a property for this element. Unlike getProperty(), only returns if the ply
-   * record contains a type that matches T exactly. Throws if * requested data is unavailable.
+   * @brief Get a vector of a data from a property for this element. Unlike
+   * getProperty(), only returns if the ply record contains a type that matches
+   * T exactly. Throws if * requested data is unavailable.
    *
    * @tparam T The type of data requested
    * @param propertyName The name of the property to get.
@@ -948,7 +1019,6 @@ public:
    */
   template <class T>
   std::vector<T> getPropertyType(const std::string& propertyName) {
-
     // Find the property
     std::unique_ptr<Property>& prop = getPropertyPtr(propertyName);
     TypedProperty<T>* castedProp = dynamic_cast<TypedProperty<T>*>(prop);
@@ -957,13 +1027,15 @@ public:
     }
 
     // No match, failure
-    throw std::runtime_error("PLY parser: property " + prop->name + " is not of type type " + typeName<T>() +
+    throw std::runtime_error("PLY parser: property " + prop->name +
+                             " is not of type type " + typeName<T>() +
                              ". Has type " + prop->propertyTypeName());
   }
 
   /**
-   * @brief Get a vector of lists of data from a property for this element. Automatically promotes to larger types.
-   * Throws if requested data is unavailable.
+   * @brief Get a vector of lists of data from a property for this element.
+   * Automatically promotes to larger types. Throws if requested data is
+   * unavailable.
    *
    * @tparam T The type of data requested
    * @param propertyName The name of the property to get.
@@ -972,7 +1044,6 @@ public:
    */
   template <class T>
   std::vector<std::vector<T>> getListProperty(const std::string& propertyName) {
-
     // Find the property
     std::unique_ptr<Property>& prop = getPropertyPtr(propertyName);
 
@@ -981,8 +1052,9 @@ public:
   }
 
   /**
-   * @brief Get a vector of a data from a property for this element. Unlike getProperty(), only returns if the ply
-   * record contains a type that matches T exactly. Throws if * requested data is unavailable.
+   * @brief Get a vector of a data from a property for this element. Unlike
+   * getProperty(), only returns if the ply record contains a type that matches
+   * T exactly. Throws if * requested data is unavailable.
    *
    * @tparam T The type of data requested
    * @param propertyName The name of the property to get.
@@ -990,26 +1062,31 @@ public:
    * @return The data.
    */
   template <class T>
-  std::vector<std::vector<T>> getListPropertyType(const std::string& propertyName) {
-
+  std::vector<std::vector<T>> getListPropertyType(
+      const std::string& propertyName) {
     // Find the property
     std::unique_ptr<Property>& prop = getPropertyPtr(propertyName);
-    TypedListProperty<T>* castedProp = dynamic_cast<TypedListProperty<T>*>(prop);
+    TypedListProperty<T>* castedProp =
+        dynamic_cast<TypedListProperty<T>*>(prop);
     if (castedProp) {
-      return unflattenList(castedProp->flattenedData, castedProp->flattenedIndexStart);
+      return unflattenList(castedProp->flattenedData,
+                           castedProp->flattenedIndexStart);
     }
 
     // No match, failure
-    throw std::runtime_error("PLY parser: list property " + prop->name + " is not of type " + typeName<T>() +
+    throw std::runtime_error("PLY parser: list property " + prop->name +
+                             " is not of type " + typeName<T>() +
                              ". Has type " + prop->propertyTypeName());
   }
 
-
   /**
-   * @brief Get a vector of lists of data from a property for this element. Automatically promotes to larger types.
-   * Unlike getListProperty(), this method will additionally convert between types of different sign (eg, requesting and
-   * int32 would get data from a uint32); doing so naively converts between signed and unsigned types. This is typically
-   * useful for data representing indices, which might be stored as signed or unsigned numbers.
+   * @brief Get a vector of lists of data from a property for this element.
+   * Automatically promotes to larger types. Unlike getListProperty(), this
+   * method will additionally convert between types of different sign (eg,
+   * requesting and int32 would get data from a uint32); doing so naively
+   * converts between signed and unsigned types. This is typically useful for
+   * data representing indices, which might be stored as signed or unsigned
+   * numbers.
    *
    * @tparam T The type of data requested
    * @param propertyName The name of the property to get.
@@ -1017,25 +1094,26 @@ public:
    * @return The data.
    */
   template <class T>
-  std::vector<std::vector<T>> getListPropertyAnySign(const std::string& propertyName) {
-
+  std::vector<std::vector<T>> getListPropertyAnySign(
+      const std::string& propertyName) {
     // Find the property
     std::unique_ptr<Property>& prop = getPropertyPtr(propertyName);
 
     // Get a copy of the data with auto-promoting type magic
     try {
-      // First, try the usual approach, looking for a version of the property with the same signed-ness and possibly
-      // smaller size
+      // First, try the usual approach, looking for a version of the property
+      // with the same signed-ness and possibly smaller size
       return getDataFromListPropertyRecursive<T, T>(prop.get());
     } catch (const std::runtime_error& orig_e) {
-
-      // If the usual approach fails, look for a version with opposite signed-ness
+      // If the usual approach fails, look for a version with opposite
+      // signed-ness
       try {
-
         // This type has the oppopsite signeness as the input type
         typedef typename CanonicalName<T>::type Tcan;
-        typedef typename std::conditional<std::is_signed<Tcan>::value, typename std::make_unsigned<Tcan>::type,
-                                          typename std::make_signed<Tcan>::type>::type OppsignType;
+        typedef typename std::conditional<
+            std::is_signed<Tcan>::value,
+            typename std::make_unsigned<Tcan>::type,
+            typename std::make_signed<Tcan>::type>::type OppsignType;
 
         return getDataFromListPropertyRecursive<T, OppsignType>(prop.get());
 
@@ -1047,22 +1125,24 @@ public:
     }
   }
 
-
   /**
    * @brief Performs sanity checks on the element, throwing if any fail.
    */
   void validate() {
-
-    // Make sure no properties have duplicate names, and no names have whitespace
+    // Make sure no properties have duplicate names, and no names have
+    // whitespace
     for (size_t iP = 0; iP < properties.size(); iP++) {
       for (char c : properties[iP]->name) {
         if (std::isspace(c)) {
-          throw std::runtime_error("Ply validate: illegal whitespace in name " + properties[iP]->name);
+          throw std::runtime_error("Ply validate: illegal whitespace in name " +
+                                   properties[iP]->name);
         }
       }
       for (size_t jP = iP + 1; jP < properties.size(); jP++) {
         if (properties[iP]->name == properties[jP]->name) {
-          throw std::runtime_error("Ply validate: multiple properties with name " + properties[iP]->name);
+          throw std::runtime_error(
+              "Ply validate: multiple properties with name " +
+              properties[iP]->name);
         }
       }
     }
@@ -1070,7 +1150,8 @@ public:
     // Make sure all properties have right length
     for (size_t iP = 0; iP < properties.size(); iP++) {
       if (properties[iP]->size() != count) {
-        throw std::runtime_error("Ply validate: property has wrong size. " + properties[iP]->name +
+        throw std::runtime_error("Ply validate: property has wrong size. " +
+                                 properties[iP]->name +
                                  " does not match element size.");
       }
     }
@@ -1082,7 +1163,6 @@ public:
    * @param outStream The stream to use.
    */
   void writeHeader(std::ostream& outStream) {
-
     outStream << "element " << name << " " << count << "\n";
 
     for (std::unique_ptr<Property>& p : properties) {
@@ -1091,14 +1171,15 @@ public:
   }
 
   /**
-   * @brief (ASCII writing) Writes out all of the data for every element of this element type to the stream, including
-   * all contained properties.
+   * @brief (ASCII writing) Writes out all of the data for every element of this
+   * element type to the stream, including all contained properties.
    *
    * @param outStream The stream to write to.
    */
   void writeDataASCII(std::ostream& outStream) {
-    // Question: what is the proper output for an element with no properties? Here, we write a blank line, so there is
-    // one line per element no matter what.
+    // Question: what is the proper output for an element with no properties?
+    // Here, we write a blank line, so there is one line per element no matter
+    // what.
     for (size_t iE = 0; iE < count; iE++) {
       for (size_t iP = 0; iP < properties.size(); iP++) {
         properties[iP]->writeDataASCII(outStream, iE);
@@ -1110,10 +1191,9 @@ public:
     }
   }
 
-
   /**
-   * @brief (binary writing) Writes out all of the data for every element of this element type to the stream, including
-   * all contained properties.
+   * @brief (binary writing) Writes out all of the data for every element of
+   * this element type to the stream, including all contained properties.
    *
    * @param outStream The stream to write to.
    */
@@ -1125,10 +1205,9 @@ public:
     }
   }
 
-
   /**
-   * @brief (binary writing) Writes out all of the data for every element of this element type to the stream, including
-   * all contained properties.
+   * @brief (binary writing) Writes out all of the data for every element of
+   * this element type to the stream, including all contained properties.
    *
    * @param outStream The stream to write to.
    */
@@ -1140,10 +1219,9 @@ public:
     }
   }
 
-
   /**
-   * @brief Helper function which does the hard work to implement type promotion for data getters. Throws if type
-   * conversion fails.
+   * @brief Helper function which does the hard work to implement type promotion
+   * for data getters. Throws if type conversion fails.
    *
    * @tparam D The desired output type
    * @tparam T The current attempt for the actual type of the property
@@ -1153,11 +1231,11 @@ public:
    */
   template <class D, class T>
   std::vector<D> getDataFromPropertyRecursive(Property* prop) {
-
     typedef typename CanonicalName<T>::type Tcan;
 
-    { // Try to return data of type D from a property of type T
-      TypedProperty<Tcan>* castedProp = dynamic_cast<TypedProperty<Tcan>*>(prop);
+    {  // Try to return data of type D from a property of type T
+      TypedProperty<Tcan>* castedProp =
+          dynamic_cast<TypedProperty<Tcan>*>(prop);
       if (castedProp) {
         // Succeeded, return a buffer of the data (copy while converting type)
         std::vector<D> castedVec;
@@ -1171,18 +1249,20 @@ public:
 
     TypeChain<Tcan> chainType;
     if (chainType.hasChildType) {
-      return getDataFromPropertyRecursive<D, typename TypeChain<Tcan>::type>(prop);
+      return getDataFromPropertyRecursive<D, typename TypeChain<Tcan>::type>(
+          prop);
     } else {
       // No smaller type to try, failure
-      throw std::runtime_error("PLY parser: property " + prop->name + " cannot be coerced to requested type " +
-                               typeName<D>() + ". Has type " + prop->propertyTypeName());
+      throw std::runtime_error("PLY parser: property " + prop->name +
+                               " cannot be coerced to requested type " +
+                               typeName<D>() + ". Has type " +
+                               prop->propertyTypeName());
     }
   }
 
-
   /**
-   * @brief Helper function which does the hard work to implement type promotion for list data getters. Throws if type
-   * conversion fails.
+   * @brief Helper function which does the hard work to implement type promotion
+   * for list data getters. Throws if type conversion fails.
    *
    * @tparam D The desired output type
    * @tparam T The current attempt for the actual type of the property
@@ -1194,17 +1274,20 @@ public:
   std::vector<std::vector<D>> getDataFromListPropertyRecursive(Property* prop) {
     typedef typename CanonicalName<T>::type Tcan;
 
-    TypedListProperty<Tcan>* castedProp = dynamic_cast<TypedListProperty<Tcan>*>(prop);
+    TypedListProperty<Tcan>* castedProp =
+        dynamic_cast<TypedListProperty<Tcan>*>(prop);
     if (castedProp) {
       // Succeeded, return a buffer of the data (copy while converting type)
 
       // Convert to flat buffer of new type
       std::vector<D>* castedFlatVec = nullptr;
-      std::vector<D> castedFlatVecCopy; // we _might_ make a copy here, depending on is_same below
+      std::vector<D> castedFlatVecCopy;  // we _might_ make a copy here,
+                                         // depending on is_same below
 
       if (std::is_same<std::vector<D>, std::vector<Tcan>>::value) {
         // just use the array we already have
-        castedFlatVec = addressIfSame<std::vector<D>>(castedProp->flattenedData, 0 /* dummy arg to disambiguate */);
+        castedFlatVec = addressIfSame<std::vector<D>>(
+            castedProp->flattenedData, 0 /* dummy arg to disambiguate */);
       } else {
         // make a copy
         castedFlatVecCopy.reserve(castedProp->flattenedData.size());
@@ -1220,16 +1303,18 @@ public:
 
     TypeChain<Tcan> chainType;
     if (chainType.hasChildType) {
-      return getDataFromListPropertyRecursive<D, typename TypeChain<Tcan>::type>(prop);
+      return getDataFromListPropertyRecursive<D,
+                                              typename TypeChain<Tcan>::type>(
+          prop);
     } else {
       // No smaller type to try, failure
       throw std::runtime_error("PLY parser: list property " + prop->name +
-                               " cannot be coerced to requested type list " + typeName<D>() + ". Has type list " +
+                               " cannot be coerced to requested type list " +
+                               typeName<D>() + ". Has type list " +
                                prop->propertyTypeName());
     }
   }
 };
-
 
 // Some string helpers
 namespace {
@@ -1238,7 +1323,9 @@ inline std::string trimSpaces(const std::string& input) {
   size_t start = 0;
   while (start < input.size() && input[start] == ' ') start++;
   size_t end = input.size();
-  while (end > start && (input[end - 1] == ' ' || input[end - 1] == '\n' || input[end - 1] == '\r')) end--;
+  while (end > start && (input[end - 1] == ' ' || input[end - 1] == '\n' ||
+                         input[end - 1] == '\r'))
+    end--;
   return input.substr(start, end - start);
 }
 
@@ -1266,28 +1353,26 @@ inline std::vector<std::string> tokenSplit(const std::string& input) {
 inline bool startsWith(const std::string& input, const std::string& query) {
   return input.compare(0, query.length(), query) == 0;
 }
-}; // namespace
-
+};  // namespace
 
 /**
  * @brief Primary class; represents a set of data in the .ply format.
  */
 class PLYData {
-
-public:
+ public:
   /**
    * @brief Create an empty PLYData object.
    */
   PLYData(){};
 
   /**
-   * @brief Initialize a PLYData by reading from a file. Throws if any failures occur.
+   * @brief Initialize a PLYData by reading from a file. Throws if any failures
+   * occur.
    *
    * @param filename The file to read from.
    * @param verbose If true, print useful info about the file to stdout
    */
   PLYData(const std::string& filename, bool verbose = false) {
-
     using std::cout;
     using std::endl;
     using std::string;
@@ -1309,13 +1394,13 @@ public:
   }
 
   /**
-   * @brief Initialize a PLYData by reading from a stringstream. Throws if any failures occur.
+   * @brief Initialize a PLYData by reading from a stringstream. Throws if any
+   * failures occur.
    *
    * @param inStream The stringstream to read from.
    * @param verbose If true, print useful info about the file to stdout
    */
   PLYData(std::istream& inStream, bool verbose = false) {
-
     using std::cout;
     using std::endl;
 
@@ -1332,16 +1417,18 @@ public:
    * @brief Perform sanity checks on the file, throwing if any fail.
    */
   void validate() {
-
     for (size_t iE = 0; iE < elements.size(); iE++) {
       for (char c : elements[iE].name) {
         if (std::isspace(c)) {
-          throw std::runtime_error("Ply validate: illegal whitespace in element name " + elements[iE].name);
+          throw std::runtime_error(
+              "Ply validate: illegal whitespace in element name " +
+              elements[iE].name);
         }
       }
       for (size_t jE = iE + 1; jE < elements.size(); jE++) {
         if (elements[iE].name == elements[jE].name) {
-          throw std::runtime_error("Ply validate: duplcate element name " + elements[iE].name);
+          throw std::runtime_error("Ply validate: duplcate element name " +
+                                   elements[iE].name);
         }
       }
     }
@@ -1358,7 +1445,8 @@ public:
    * @param filename The file to write to.
    * @param format The format to use (binary or ascii?)
    */
-  void write(const std::string& filename, DataFormat format = DataFormat::ASCII) {
+  void write(const std::string& filename,
+             DataFormat format = DataFormat::ASCII) {
     outputDataFormat = format;
 
     validate();
@@ -1366,7 +1454,8 @@ public:
     // Open stream for writing
     std::ofstream outStream(filename, std::ios::out | std::ios::binary);
     if (!outStream.good()) {
-      throw std::runtime_error("Ply writer: Could not open output file " + filename + " for writing");
+      throw std::runtime_error("Ply writer: Could not open output file " +
+                               filename + " for writing");
     }
 
     writePLY(outStream);
@@ -1400,7 +1489,6 @@ public:
     throw std::runtime_error("PLY parser: no element with name: " + target);
   }
 
-
   /**
    * @brief Check if an element type exists
    *
@@ -1415,7 +1503,6 @@ public:
     return false;
   }
 
-
   /**
    * @brief A list of the names of all elements
    *
@@ -1429,17 +1516,17 @@ public:
     return names;
   }
 
-
   /**
    * @brief Add a new element type to the object
    *
    * @param name The name of the new element type ("vertices").
    * @param count The number of elements of this type.
    */
-  void addElement(const std::string& name, size_t count) { elements.emplace_back(name, count); }
+  void addElement(const std::string& name, size_t count) {
+    elements.emplace_back(name, count);
+  }
 
   // === Common-case helpers
-
 
   /**
    * @brief Common-case helper get mesh vertex positions
@@ -1448,11 +1535,14 @@ public:
    *
    * @return A vector of vertex positions.
    */
-  std::vector<std::array<double, 3>> getVertexPositions(const std::string& vertexElementName = "vertex") {
-
-    std::vector<double> xPos = getElement(vertexElementName).getProperty<double>("x");
-    std::vector<double> yPos = getElement(vertexElementName).getProperty<double>("y");
-    std::vector<double> zPos = getElement(vertexElementName).getProperty<double>("z");
+  std::vector<std::array<double, 3>> getVertexPositions(
+      const std::string& vertexElementName = "vertex") {
+    std::vector<double> xPos =
+        getElement(vertexElementName).getProperty<double>("x");
+    std::vector<double> yPos =
+        getElement(vertexElementName).getProperty<double>("y");
+    std::vector<double> zPos =
+        getElement(vertexElementName).getProperty<double>("z");
 
     std::vector<std::array<double, 3>> result(xPos.size());
     for (size_t i = 0; i < result.size(); i++) {
@@ -1471,11 +1561,14 @@ public:
    *
    * @return A vector of vertex colors (unsigned chars [0,255]).
    */
-  std::vector<std::array<unsigned char, 3>> getVertexColors(const std::string& vertexElementName = "vertex") {
-
-    std::vector<unsigned char> r = getElement(vertexElementName).getProperty<unsigned char>("red");
-    std::vector<unsigned char> g = getElement(vertexElementName).getProperty<unsigned char>("green");
-    std::vector<unsigned char> b = getElement(vertexElementName).getProperty<unsigned char>("blue");
+  std::vector<std::array<unsigned char, 3>> getVertexColors(
+      const std::string& vertexElementName = "vertex") {
+    std::vector<unsigned char> r =
+        getElement(vertexElementName).getProperty<unsigned char>("red");
+    std::vector<unsigned char> g =
+        getElement(vertexElementName).getProperty<unsigned char>("green");
+    std::vector<unsigned char> b =
+        getElement(vertexElementName).getProperty<unsigned char>("blue");
 
     std::vector<std::array<unsigned char, 3>> result(r.size());
     for (size_t i = 0; i < result.size(); i++) {
@@ -1488,17 +1581,19 @@ public:
   }
 
   /**
-   * @brief Common-case helper to get face indices for a mesh. If not template type is given, size_t is used. Naively
-   * converts to requested signedness, which may lead to unexpected values if an unsigned type is used and file contains
-   * negative values.
+   * @brief Common-case helper to get face indices for a mesh. If not template
+   * type is given, size_t is used. Naively converts to requested signedness,
+   * which may lead to unexpected values if an unsigned type is used and file
+   * contains negative values.
    *
-   * @return The indices into the vertex elements for each face. Usually 0-based, though there are no formal rules.
+   * @return The indices into the vertex elements for each face. Usually
+   * 0-based, though there are no formal rules.
    */
   template <typename T = size_t>
   std::vector<std::vector<T>> getFaceIndices() {
-
     for (const std::string& f : std::vector<std::string>{"face"}) {
-      for (const std::string& p : std::vector<std::string>{"vertex_indices", "vertex_index"}) {
+      for (const std::string& p :
+           std::vector<std::string>{"vertex_indices", "vertex_index"}) {
         try {
           return getElement(f).getListPropertyAnySign<T>(p);
         } catch (const std::runtime_error&) {
@@ -1506,17 +1601,18 @@ public:
         }
       }
     }
-    throw std::runtime_error("PLY parser: could not find face vertex indices attribute under any common name.");
+    throw std::runtime_error(
+        "PLY parser: could not find face vertex indices attribute under any "
+        "common name.");
   }
 
-
   /**
-   * @brief Common-case helper set mesh vertex positons. Creates vertex element, if necessary.
+   * @brief Common-case helper set mesh vertex positons. Creates vertex element,
+   * if necessary.
    *
    * @param vertexPositions A vector of vertex positions
    */
   void addVertexPositions(std::vector<std::array<double, 3>>& vertexPositions) {
-
     std::string vertexName = "vertex";
     size_t N = vertexPositions.size();
 
@@ -1542,12 +1638,12 @@ public:
   }
 
   /**
-   * @brief Common-case helper set mesh vertex colors. Creates a vertex element, if necessary.
+   * @brief Common-case helper set mesh vertex colors. Creates a vertex element,
+   * if necessary.
    *
    * @param colors A vector of vertex colors (unsigned chars [0,255]).
    */
   void addVertexColors(std::vector<std::array<unsigned char, 3>>& colors) {
-
     std::string vertexName = "vertex";
     size_t N = colors.size();
 
@@ -1573,12 +1669,13 @@ public:
   }
 
   /**
-   * @brief Common-case helper set mesh vertex colors. Creates a vertex element, if necessary.
+   * @brief Common-case helper set mesh vertex colors. Creates a vertex element,
+   * if necessary.
    *
-   * @param colors A vector of vertex colors as floating point [0,1] values. Internally converted to [0,255] chars.
+   * @param colors A vector of vertex colors as floating point [0,1] values.
+   * Internally converted to [0,255] chars.
    */
   void addVertexColors(std::vector<std::array<double, 3>>& colors) {
-
     std::string vertexName = "vertex";
     size_t N = colors.size();
 
@@ -1609,16 +1706,15 @@ public:
     getElement(vertexName).addProperty<unsigned char>("blue", b);
   }
 
-
   /**
-   * @brief Common-case helper to set face indices. Creates a face element if needed. The input type will be casted to a
-   * 32 bit integer of the same signedness.
+   * @brief Common-case helper to set face indices. Creates a face element if
+   * needed. The input type will be casted to a 32 bit integer of the same
+   * signedness.
    *
    * @param indices The indices into the vertex list around each face.
    */
   template <typename T>
   void addFaceIndices(std::vector<std::vector<T>>& indices) {
-
     std::string faceName = "face";
     size_t N = indices.size();
 
@@ -1628,7 +1724,8 @@ public:
     }
 
     // Cast to 32 bit
-    typedef typename std::conditional<std::is_signed<T>::value, int32_t, uint32_t>::type IndType;
+    typedef typename std::conditional<std::is_signed<T>::value, int32_t,
+                                      uint32_t>::type IndType;
     std::vector<std::vector<IndType>> intInds;
     for (std::vector<T>& l : indices) {
       std::vector<IndType> thisInds;
@@ -1636,7 +1733,8 @@ public:
         IndType valConverted = static_cast<IndType>(val);
         if (valConverted != val) {
           throw std::runtime_error("Index value " + std::to_string(val) +
-                                   " could not be converted to a .ply integer without loss of data. Note that .ply "
+                                   " could not be converted to a .ply integer "
+                                   "without loss of data. Note that .ply "
                                    "only supports 32-bit ints.");
         }
         thisInds.push_back(valConverted);
@@ -1648,26 +1746,26 @@ public:
     getElement(faceName).addListProperty<IndType>("vertex_indices", intInds);
   }
 
-
   /**
-   * @brief Comments for the file. When writing, each entry will be written as a sequential comment line.
+   * @brief Comments for the file. When writing, each entry will be written as a
+   * sequential comment line.
    */
   std::vector<std::string> comments;
 
-
   /**
-   * @brief obj_info comments for the file. When writing, each entry will be written as a sequential comment line.
+   * @brief obj_info comments for the file. When writing, each entry will be
+   * written as a sequential comment line.
    */
   std::vector<std::string> objInfoComments;
 
-private:
+ private:
   std::vector<Element> elements;
-  const int majorVersion = 1; // I'll buy you a drink if these ever get bumped
+  const int majorVersion = 1;  // I'll buy you a drink if these ever get bumped
   const int minorVersion = 0;
 
-  DataFormat inputDataFormat = DataFormat::ASCII;  // set when reading from a file
-  DataFormat outputDataFormat = DataFormat::ASCII; // option for writing files
-
+  DataFormat inputDataFormat =
+      DataFormat::ASCII;  // set when reading from a file
+  DataFormat outputDataFormat = DataFormat::ASCII;  // option for writing files
 
   // === Reading ===
 
@@ -1678,10 +1776,8 @@ private:
    * @param verbose
    */
   void parsePLY(std::istream& inStream, bool verbose) {
-
     // == Process the header
     parseHeader(inStream, verbose);
-
 
     // === Parse data from a binary file
     if (inputDataFormat == DataFormat::Binary) {
@@ -1704,32 +1800,35 @@ private:
    * @param verbose
    */
   void parseHeader(std::istream& inStream, bool verbose) {
-
     using std::cout;
     using std::endl;
     using std::string;
     using std::vector;
 
     // First two lines are predetermined
-    { // First line is magic constant
+    {  // First line is magic constant
       string plyLine;
       std::getline(inStream, plyLine);
       if (trimSpaces(plyLine) != "ply") {
-        throw std::runtime_error("PLY parser: File does not appear to be ply file. First line should be 'ply'");
+        throw std::runtime_error(
+            "PLY parser: File does not appear to be ply file. First line "
+            "should be 'ply'");
       }
     }
 
-    { // second line is version
+    {  // second line is version
       string styleLine;
       std::getline(inStream, styleLine);
       vector<string> tokens = tokenSplit(styleLine);
-      if (tokens.size() != 3) throw std::runtime_error("PLY parser: bad format line");
+      if (tokens.size() != 3)
+        throw std::runtime_error("PLY parser: bad format line");
       std::string formatStr = tokens[0];
       std::string typeStr = tokens[1];
       std::string versionStr = tokens[2];
 
       // "format"
-      if (formatStr != "format") throw std::runtime_error("PLY parser: bad format line");
+      if (formatStr != "format")
+        throw std::runtime_error("PLY parser: bad format line");
 
       // ascii/binary
       if (typeStr == "ascii") {
@@ -1747,7 +1846,9 @@ private:
 
       // version
       if (versionStr != "1.0") {
-        throw std::runtime_error("PLY parser: encountered file with version != 1.0. Don't know how to parse that");
+        throw std::runtime_error(
+            "PLY parser: encountered file with version != 1.0. Don't know how "
+            "to parse that");
       }
       if (verbose) cout << "  - Version: " << versionStr << endl;
     }
@@ -1776,27 +1877,35 @@ private:
       // Parse an element
       else if (startsWith(line, "element")) {
         vector<string> tokens = tokenSplit(line);
-        if (tokens.size() != 3) throw std::runtime_error("PLY parser: Invalid element line");
+        if (tokens.size() != 3)
+          throw std::runtime_error("PLY parser: Invalid element line");
         string name = tokens[1];
         size_t count;
         std::istringstream iss(tokens[2]);
         iss >> count;
         elements.emplace_back(name, count);
-        if (verbose) cout << "  - Found element: " << name << " (count = " << count << ")" << endl;
+        if (verbose)
+          cout << "  - Found element: " << name << " (count = " << count << ")"
+               << endl;
         continue;
       }
 
       // Parse a property list
       else if (startsWith(line, "property list")) {
         vector<string> tokens = tokenSplit(line);
-        if (tokens.size() != 5) throw std::runtime_error("PLY parser: Invalid property list line");
-        if (elements.size() == 0) throw std::runtime_error("PLY parser: Found property list without previous element");
+        if (tokens.size() != 5)
+          throw std::runtime_error("PLY parser: Invalid property list line");
+        if (elements.size() == 0)
+          throw std::runtime_error(
+              "PLY parser: Found property list without previous element");
         string countType = tokens[2];
         string type = tokens[3];
         string name = tokens[4];
-        elements.back().properties.push_back(createPropertyWithType(name, type, true, countType));
+        elements.back().properties.push_back(
+            createPropertyWithType(name, type, true, countType));
         if (verbose)
-          cout << "    - Found list property: " << name << " (count type = " << countType << ", data type = " << type
+          cout << "    - Found list property: " << name
+               << " (count type = " << countType << ", data type = " << type
                << ")" << endl;
         continue;
       }
@@ -1804,12 +1913,18 @@ private:
       // Parse a property
       else if (startsWith(line, "property")) {
         vector<string> tokens = tokenSplit(line);
-        if (tokens.size() != 3) throw std::runtime_error("PLY parser: Invalid property line");
-        if (elements.size() == 0) throw std::runtime_error("PLY parser: Found property without previous element");
+        if (tokens.size() != 3)
+          throw std::runtime_error("PLY parser: Invalid property line");
+        if (elements.size() == 0)
+          throw std::runtime_error(
+              "PLY parser: Found property without previous element");
         string type = tokens[1];
         string name = tokens[2];
-        elements.back().properties.push_back(createPropertyWithType(name, type, false, ""));
-        if (verbose) cout << "    - Found property: " << name << " (type = " << type << ")" << endl;
+        elements.back().properties.push_back(
+            createPropertyWithType(name, type, false, ""));
+        if (verbose)
+          cout << "    - Found property: " << name << " (type = " << type << ")"
+               << endl;
         continue;
       }
 
@@ -1832,13 +1947,11 @@ private:
    * @param verbose
    */
   void parseASCII(std::istream& inStream, bool verbose) {
-
     using std::string;
     using std::vector;
 
     // Read all elements
     for (Element& elem : elements) {
-
       if (verbose) {
         std::cout << "  - Processing element: " << elem.name << std::endl;
       }
@@ -1847,14 +1960,17 @@ private:
         elem.properties[iP]->reserve(elem.count);
       }
       for (size_t iEntry = 0; iEntry < elem.count; iEntry++) {
-
         string line;
         std::getline(inStream, line);
 
-        // Some .ply files seem to include empty lines before the start of property data (though this is not specified
-        // in the format description). We attempt to recover and parse such files by skipping any empty lines.
-        if (!elem.properties.empty()) { // if the element has no properties, the line _should_ be blank, presumably
-          while (line.empty()) { // skip lines until we hit something nonempty
+        // Some .ply files seem to include empty lines before the start of
+        // property data (though this is not specified in the format
+        // description). We attempt to recover and parse such files by skipping
+        // any empty lines.
+        if (!elem.properties
+                 .empty()) {      // if the element has no properties, the line
+                                  // _should_ be blank, presumably
+          while (line.empty()) {  // skip lines until we hit something nonempty
             std::getline(inStream, line);
           }
         }
@@ -1875,7 +1991,6 @@ private:
    * @param verbose
    */
   void parseBinary(std::istream& inStream, bool verbose) {
-
     if (!isLittleEndian()) {
       throw std::runtime_error("binary reading assumes little endian system");
     }
@@ -1885,7 +2000,6 @@ private:
 
     // Read all elements
     for (Element& elem : elements) {
-
       if (verbose) {
         std::cout << "  - Processing element: " << elem.name << std::endl;
       }
@@ -1908,7 +2022,6 @@ private:
    * @param verbose
    */
   void parseBinaryBigEndian(std::istream& inStream, bool verbose) {
-
     if (!isLittleEndian()) {
       throw std::runtime_error("binary reading assumes little endian system");
     }
@@ -1918,7 +2031,6 @@ private:
 
     // Read all elements
     for (Element& elem : elements) {
-
       if (verbose) {
         std::cout << "  - Processing element: " << elem.name << std::endl;
       }
@@ -1936,26 +2048,26 @@ private:
 
   // === Writing ===
 
-
   /**
    * @brief write a PLY file to an output stream
    *
    * @param outStream
    */
   void writePLY(std::ostream& outStream) {
-
     writeHeader(outStream);
 
     // Write all elements
     for (Element& e : elements) {
       if (outputDataFormat == DataFormat::Binary) {
         if (!isLittleEndian()) {
-          throw std::runtime_error("binary writing assumes little endian system");
+          throw std::runtime_error(
+              "binary writing assumes little endian system");
         }
         e.writeDataBinary(outStream);
       } else if (outputDataFormat == DataFormat::BinaryBigEndian) {
         if (!isLittleEndian()) {
-          throw std::runtime_error("binary writing assumes little endian system");
+          throw std::runtime_error(
+              "binary writing assumes little endian system");
         }
         e.writeDataBinaryBigEndian(outStream);
       } else if (outputDataFormat == DataFormat::ASCII) {
@@ -1964,14 +2076,12 @@ private:
     }
   }
 
-
   /**
    * @brief Write out a header for a file
    *
    * @param outStream
    */
   void writeHeader(std::ostream& outStream) {
-
     // Magic line
     outStream << "ply\n";
 
@@ -1990,7 +2100,8 @@ private:
 
     // Write comments
     bool hasHapplyComment = false;
-    std::string happlyComment = "Written with hapPLY (https://github.com/nmwsharp/happly)";
+    std::string happlyComment =
+        "Written with hapPLY (https://github.com/nmwsharp/happly)";
     for (const std::string& comment : comments) {
       if (comment == happlyComment) hasHapplyComment = true;
       outStream << "comment " << comment << "\n";
@@ -2014,4 +2125,4 @@ private:
   }
 };
 
-} // namespace happly
+}  // namespace happly

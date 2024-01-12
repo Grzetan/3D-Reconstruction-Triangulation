@@ -1,76 +1,88 @@
 #pragma once
-#include <vector>
-#include <queue>
 #include <algorithm>
 #include <opencv2/opencv.hpp>
-#include "Triangulator.h"
+#include <queue>
+#include <vector>
+
 #include "DetectionsContainer.h"
+#include "Triangulator.h"
 #include "utils.h"
 
-# define MAX_ERROR_MATRIX 1e+5 // Max error for matrix triangulator
-# define MAX_ERROR_RAY 120 // Max error for ray triangulator
-# define MAX_STEP 200 // Max difference between drone positions between frames (used in new algo)
-# define MIN_CAMERAS 2 // Minimum number of cameras for valid combination
-# define PATH_TAIL 3 // Length of path tail. Used in classyfing drones to paths
+#define MAX_ERROR_MATRIX 1e+5  // Max error for matrix triangulator
+#define MAX_ERROR_RAY 120      // Max error for ray triangulator
+#define MAX_STEP \
+  200  // Max difference between drone positions between frames (used in new
+       // algo)
+#define MIN_CAMERAS 2  // Minimum number of cameras for valid combination
+#define PATH_TAIL 3  // Length of path tail. Used in classyfing drones to paths
 
-class DroneClassifier{
-public:
-    struct Combination {
-        std::vector<int> combination_;
-        cv::Point3d point;
-        double error;
+class DroneClassifier {
+ public:
+  struct Combination {
+    std::vector<int> combination_;
+    cv::Point3d point;
+    double error;
 
-        bool operator<(const Combination& c) const;
+    bool operator<(const Combination& c) const;
 
-        bool operator>(const Combination& c) const;
+    bool operator>(const Combination& c) const;
 
-        bool isCombinationUnique(const std::vector<Combination>& combinations);
-    };
+    bool isCombinationUnique(const std::vector<Combination>& combinations);
+  };
 
-    struct CombinationPath{
-        size_t combination;
-        size_t path;
-        double error;
+  struct CombinationPath {
+    size_t combination;
+    size_t path;
+    double error;
 
-        bool operator > (const CombinationPath& elem) const;
-    };
+    bool operator>(const CombinationPath& elem) const;
+  };
 
-private:
-    Triangulator* triangulator_;
-    size_t n_drones_;
+ private:
+  Triangulator* triangulator_;
+  size_t n_drones_;
 
-    double error_;
+  double error_;
 
-    class Iterator{
-        std::vector<int> combination_;
-        bool skipNext = false;
-        const std::vector<int> sizes_;
-    public:
-        Iterator(std::vector<int> sizes);
+  class Iterator {
+    std::vector<int> combination_;
+    bool skipNext = false;
+    const std::vector<int> sizes_;
 
-        bool increment();
+   public:
+    Iterator(std::vector<int> sizes);
 
-        bool cut();
+    bool increment();
 
-        std::vector<int> getCombination();
-    };
+    bool cut();
 
-    void fillCombinationQueue(const DetectionsContainer& container, int frame, std::priority_queue<Combination>& pq);
+    std::vector<int> getCombination();
+  };
 
-    std::vector<Combination> pickBestCombinations(const DetectionsContainer& container, int frame, const std::vector<Combination>& usedCombinations);
+  void fillCombinationQueue(const DetectionsContainer& container, int frame,
+                            std::priority_queue<Combination>& pq);
 
-    Combination triangulateWithLastPos(cv::Point3d pos, const DetectionsContainer& container, std::vector<Combination> usedCombinations, int frame);
+  std::vector<Combination> pickBestCombinations(
+      const DetectionsContainer& container, int frame,
+      const std::vector<Combination>& usedCombinations);
 
-    bool isDetectionInCombinations(int cam, int det, const std::vector<Combination>& combinations);
+  Combination triangulateWithLastPos(cv::Point3d pos,
+                                     const DetectionsContainer& container,
+                                     std::vector<Combination> usedCombinations,
+                                     int frame);
 
-    void classifyPaths(const std::vector<Combination>& finalCombinations,
-                       std::vector<std::vector<cv::Point3d>>& triangulatedPoints,
-                       std::vector<int>& processedPaths,
-                       std::vector<std::vector<int>>& emptyFrames, 
-                       int frame);
+  bool isDetectionInCombinations(int cam, int det,
+                                 const std::vector<Combination>& combinations);
 
-public:
-    DroneClassifier(Triangulator* triangulator, size_t n_drones);
+  void classifyPaths(const std::vector<Combination>& finalCombinations,
+                     std::vector<std::vector<cv::Point3d>>& triangulatedPoints,
+                     std::vector<int>& processedPaths,
+                     std::vector<std::vector<int>>& emptyFrames, int frame);
 
-	void classifyDrones(const DetectionsContainer& container, std::vector<std::vector<cv::Point3d>>& triangulatedPoints);
+ public:
+  DroneClassifier(Triangulator* triangulator, size_t n_drones);
+
+  void classifyDrones(
+      const DetectionsContainer& container,
+      std::vector<std::vector<cv::Point3d>>& triangulatedPoints);
 };
