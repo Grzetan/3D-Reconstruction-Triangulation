@@ -80,11 +80,11 @@ std::vector<const tdr::Camera *> loadCamerasXML(const char *path) {
     std::stringstream orientation =
         std::stringstream(controlFrame.attribute("ORIENTATION").value());
     double w, i, j, k;
-    orientation >> i >> j >> k >> w;
+    orientation >> w >> i >> j >> k;
 
     const tdr::Camera *cam = createCamera(
         id, width, height, focalLength, (cv::Mat_<double>(3, 1) << x, y, z),
-        (cv::Mat_<double>(4, 1) << w, -i, -j, -k));
+        (cv::Mat_<double>(4, 1) << w, i, j, k));
     cameras.push_back(cam);
   }
 
@@ -158,12 +158,34 @@ double calculateStd(Path &labelPath, Path &predPath, double mean) {
                            std::pow(predPath[i].y - labelPath[i].y, 2) +
                            std::pow(predPath[i].z - labelPath[i].z, 2));
     if (!std::isnan(err)) {
-      std::cout << std::pow(err - mean, 2) << std::endl;
       sumError += std::pow(err - mean, 2);
     }
   }
 
   return sumError / (double)size;
+}
+
+double calcualteQuarterDeviation(Path &labelPath, Path &predPath) {
+  size_t size = std::min(labelPath.size(), predPath.size());
+  std::vector<double> errors;
+
+  for (int i = 0; i < size; i++) {
+    if (predPath[i].x == 0 && predPath[i].y == 0 && predPath[i].z == 0)
+      continue;
+    double err = std::sqrt(std::pow(predPath[i].x - labelPath[i].x, 2) +
+                           std::pow(predPath[i].y - labelPath[i].y, 2) +
+                           std::pow(predPath[i].z - labelPath[i].z, 2));
+    if (!std::isnan(err)) {
+      errors.push_back(err);
+    }
+  }
+
+  std::sort(errors.begin(), errors.end());
+
+  double q1 = errors[size / 4];
+  double q3 = errors[3 * (size / 4)];
+
+  return (q3 - q1) / 2;
 }
 
 double calculateMedian(Path &labelPath, Path &predPath) {
@@ -176,7 +198,6 @@ double calculateMedian(Path &labelPath, Path &predPath) {
     double err = std::sqrt(std::pow(predPath[i].x - labelPath[i].x, 2) +
                            std::pow(predPath[i].y - labelPath[i].y, 2) +
                            std::pow(predPath[i].z - labelPath[i].z, 2));
-    // std::cout << err << std::endl;
     if (!std::isnan(err)) errors.push_back(err);
   }
 
@@ -241,7 +262,6 @@ void readInputCSV(const char *dir, std::vector<Path> &paths, int frequency,
       }
       std::vector<cv::Point3d> cross = cross3d(markerPos);
       if (cross.size() != 5) {
-        std::cout << "OK" << std::endl;
         continue;
       }
 

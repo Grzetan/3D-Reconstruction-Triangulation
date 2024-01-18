@@ -66,21 +66,24 @@ int main(int argc, const char **argv) {
     double minAvg = 1e+8;
     double minMedian = 1e+8;
     double minStd = 1e+8;
+    double minQStd = 1e+8;
     std::string labelPath = "";
     for (int i = 0; i < labelPaths.size(); i++) {
       double error = calculateError(labelPaths[i], predPath);
       double median = calculateMedian(labelPaths[i], predPath);
       double std = calculateStd(labelPaths[i], predPath, error);
+      double qstd = calcualteQuarterDeviation(labelPaths[i], predPath);
       if (error < minAvg) {
         minAvg = error;
         minMedian = median;
         minStd = std;
+        minQStd = qstd;
         labelPath = OUTPUT_DIR + "label_" + std::to_string(i + 1) + ".ply";
       }
     }
 
     std::cout << entry.path() << " with " << labelPath
               << ": average error: " << minAvg << " median error: " << minMedian
-              << " std: " << minStd << std::endl;
+              << " std: " << minStd << " qstd: " << minQStd << std::endl;
   }
 }
